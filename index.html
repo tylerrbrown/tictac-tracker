@@ -434,18 +434,26 @@ function renderLanding() {
         <label>Name</label>
         <input id="c-name" placeholder="e.g. Vitamins, Brush, Laundry" maxlength="40">
       </div>
-      <div class="form-group">
-        <label>Interval</label>
-        <input id="c-interval" value="3.5d" placeholder="e.g. 1d, 3.5d, 1w, 12h">
-      </div>
-      <div class="form-group">
-        <label>Color</label>
-        <div class="color-grid" id="c-color-grid"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Interval</label>
+          <input id="c-interval" value="3.5d" placeholder="e.g. 1d, 3.5d, 1w, 12h">
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <div class="color-grid" id="c-color-grid">
+            ${COLORS_LIST.map(c =>
+              `<div class="color-swatch ${c === 'orange' ? 'selected' : ''}"
+                    style="background:${COLOR_HEX[c]}"
+                    data-color="${c}"
+                    onclick="pickColor(this)"></div>`
+            ).join('')}
+          </div>
+        </div>
       </div>
       <button class="create-btn" id="c-btn" onclick="createTracker()">Create Tracker</button>
     </div>
   `;
-  renderColorPicker('c-color-grid', 'orange');
 }
 
 function renderColorPicker(containerId, selected) {
