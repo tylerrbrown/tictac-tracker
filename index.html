@@ -434,6 +434,13 @@ const COLOR_HEX = {
   gray:'#6b7280', brown:'#92400e', gold:'#d97706'
 };
 
+const isNewTracker = params.get('new') === '1';
+if (isNewTracker) {
+  // Strip ?new=1 from URL so refresh won't show tip again
+  params.delete('new');
+  window.history.replaceState(null, '', '?' + params.toString());
+}
+
 // ── Decide mode ──
 if (trackerSlug) {
   initTrackerPage(trackerSlug);
@@ -618,7 +625,7 @@ function showResult(tracker) {
       <div class="result-url" id="result-url">${esc(url)}</div>
       <div class="result-actions">
         <button class="btn-copy" onclick="copyURL()">Copy URL</button>
-        <a class="btn-open" href="${url}">Open Tracker</a>
+        <a class="btn-open" href="${url}&new=1">Open Tracker</a>
         <button class="btn-another" onclick="renderLanding()">Create Another</button>
       </div>
       ${getHomescreenTip()}
@@ -807,6 +814,9 @@ function renderTracker() {
     }
   }
   html += '</div>';
+  if (isNewTracker) {
+    html += getHomescreenTip();
+  }
   app.innerHTML = html;
 }
 
