@@ -226,6 +226,11 @@ function tickTimer() {
   } else {
     el.textContent = fmt(INTERVAL_MS - elapsed);
   }
+  // Update ago times
+  document.querySelectorAll('.log-ago').forEach((el, idx) => {
+    const e = entries[entries.length - 1 - idx];
+    if (e) el.textContent = ago(e.ts);
+  });
 }
 
 // Full rebuild — only on data changes
