@@ -277,7 +277,120 @@ function renderFull() {
     }
   }
   html += '</div>';
+
+  // Theme switcher
+  html += `
+    <div style="display:flex;gap:0.5rem;margin-top:1.5rem;justify-content:center;">
+      <button onclick="setTheme('A')" style="padding:0.5rem 1.2rem;border-radius:8px;border:none;font-weight:600;font-size:1rem;cursor:pointer;background:#0e7490;color:#fff;">A</button>
+      <button onclick="setTheme('B')" style="padding:0.5rem 1.2rem;border-radius:8px;border:none;font-weight:600;font-size:1rem;cursor:pointer;background:#7c3aed;color:#fff;">B</button>
+      <button onclick="setTheme('C')" style="padding:0.5rem 1.2rem;border-radius:8px;border:none;font-weight:600;font-size:1rem;cursor:pointer;background:#ea580c;color:#fff;">C</button>
+    </div>`;
+
   app.innerHTML = html;
+}
+
+const themes = {
+  A: { // Ocean
+    bg: '#0c1222',
+    cardBg: '#152238',
+    text: '#cbd5e1',
+    muted: '#64748b',
+    dimmed: '#475569',
+    border: '#1e3a5f',
+    greenGrad: 'linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf)',
+    greenSolid: '#14b8a6',
+    greenShadow: 'rgba(20, 184, 166, 0.35)',
+    greenBtnShadow: 'rgba(20, 184, 166, 0.4)',
+    redGrad: 'linear-gradient(135deg, #0369a1, #0284c7, #38bdf8)',
+    redShadow: 'rgba(56, 189, 248, 0.3)',
+    disabledBg: '#152238',
+    disabledColor: '#475569',
+  },
+  B: { // Midnight Purple
+    bg: '#13111c',
+    cardBg: '#1e1b2e',
+    text: '#d4d0e8',
+    muted: '#8b83a8',
+    dimmed: '#5b5478',
+    border: '#2a2545',
+    greenGrad: 'linear-gradient(135deg, #059669, #10b981, #34d399)',
+    greenSolid: '#10b981',
+    greenShadow: 'rgba(16, 185, 129, 0.35)',
+    greenBtnShadow: 'rgba(16, 185, 129, 0.4)',
+    redGrad: 'linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa)',
+    redShadow: 'rgba(139, 92, 246, 0.3)',
+    disabledBg: '#1e1b2e',
+    disabledColor: '#5b5478',
+  },
+  C: { // Warm Dark
+    bg: '#1a1a1a',
+    cardBg: '#2a2a2a',
+    text: '#d4d4d4',
+    muted: '#a3a3a3',
+    dimmed: '#6b6b6b',
+    border: '#3a3a3a',
+    greenGrad: 'linear-gradient(135deg, #059669, #10b981, #34d399)',
+    greenSolid: '#10b981',
+    greenShadow: 'rgba(16, 185, 129, 0.35)',
+    greenBtnShadow: 'rgba(16, 185, 129, 0.4)',
+    redGrad: 'linear-gradient(135deg, #c2410c, #ea580c, #fb923c)',
+    redShadow: 'rgba(234, 88, 12, 0.3)',
+    disabledBg: '#2a2a2a',
+    disabledColor: '#6b6b6b',
+  }
+};
+
+function setTheme(key) {
+  const t = themes[key];
+  if (!t) return;
+  document.body.style.background = t.bg;
+  document.body.style.color = t.text;
+
+  const card = document.querySelector('.status-card');
+  if (card) {
+    if (card.classList.contains('green')) {
+      card.style.background = t.greenGrad;
+      card.style.boxShadow = '0 8px 30px ' + t.greenShadow;
+    } else {
+      card.style.background = t.redGrad;
+      card.style.boxShadow = '0 8px 30px ' + t.redShadow;
+    }
+  }
+
+  const greenBtn = document.querySelector('.green-btn');
+  if (greenBtn) {
+    greenBtn.style.background = t.greenSolid;
+    greenBtn.style.boxShadow = '0 4px 20px ' + t.greenBtnShadow;
+  }
+  const redBtn = document.querySelector('.red-btn');
+  if (redBtn) {
+    redBtn.style.background = t.disabledBg;
+    redBtn.style.color = t.disabledColor;
+  }
+
+  const logSection = document.querySelector('.log-section');
+  if (logSection) {
+    logSection.style.background = t.cardBg;
+  }
+  const logH2 = document.querySelector('.log-section h2');
+  if (logH2) {
+    logH2.style.color = t.dimmed;
+    logH2.style.borderBottomColor = t.border;
+  }
+  document.querySelectorAll('.log-entry').forEach(el => {
+    el.style.borderBottomColor = t.border;
+  });
+  document.querySelectorAll('.log-date').forEach(el => {
+    el.style.color = t.muted;
+  });
+  document.querySelectorAll('.log-ago').forEach(el => {
+    el.style.color = t.dimmed;
+  });
+  document.querySelectorAll('.delete-btn').forEach(el => {
+    el.style.color = t.dimmed;
+  });
+
+  localStorage.setItem('tictac-theme', key);
 }
 </script>
 </body>
