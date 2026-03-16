@@ -404,56 +404,36 @@ function initLandingPage() {
   renderLanding();
 }
 
+function buildColorSwatches(selected) {
+  return COLORS_LIST.map(function(c) {
+    var sel = c === selected ? 'selected' : '';
+    return '<div class="color-swatch ' + sel + '" style="background:' + COLOR_HEX[c] + '" data-color="' + c + '" onclick="pickColor(this)"></div>';
+  }).join('');
+}
+
 function renderLanding() {
-  const app = document.getElementById('app');
-  app.innerHTML = `
-    <div class="landing-hero">
-      <h1>Tic Tac Tracker</h1>
-      <p>Simple interval tracking for anything you do on a schedule &mdash; medication, vitamins, habits, and more.</p>
-    </div>
-
-    <div class="how-it-works">
-      <h2>How It Works</h2>
-      <div class="how-step">
-        <span class="how-num">1</span>
-        <span class="how-text"><strong>Create a tracker</strong> &mdash; give it a name, set how often you want to do it, and pick a color.</span>
-      </div>
-      <div class="how-step">
-        <span class="how-num">2</span>
-        <span class="how-text"><strong>Bookmark your URL</strong> &mdash; you'll get a unique link. Save it to your home screen for easy access.</span>
-      </div>
-      <div class="how-step">
-        <span class="how-num">3</span>
-        <span class="how-text"><strong>Tap the button</strong> each time you complete the task. A live countdown shows when you're due next.</span>
-      </div>
-    </div>
-
-    <div class="create-section" id="create-section">
-      <h2>Create a Tracker</h2>
-      <div class="form-group">
-        <label>Name</label>
-        <input id="c-name" placeholder="e.g. Vitamins, Brush, Laundry" maxlength="40">
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Interval</label>
-          <input id="c-interval" value="3.5d" placeholder="e.g. 1d, 3.5d, 1w, 12h">
-        </div>
-        <div class="form-group">
-          <label>Color</label>
-          <div class="color-grid" id="c-color-grid">
-            ${COLORS_LIST.map(c =>
-              `<div class="color-swatch ${c === 'orange' ? 'selected' : ''}"
-                    style="background:${COLOR_HEX[c]}"
-                    data-color="${c}"
-                    onclick="pickColor(this)"></div>`
-            ).join('')}
-          </div>
-        </div>
-      </div>
-      <button class="create-btn" id="c-btn" onclick="createTracker()">Create Tracker</button>
-    </div>
-  `;
+  var swatches = buildColorSwatches('orange');
+  var app = document.getElementById('app');
+  app.innerHTML =
+    '<div class="landing-hero">' +
+      '<h1>Tic Tac Tracker</h1>' +
+      '<p>Simple interval tracking for anything you do on a schedule &mdash; medication, vitamins, habits, and more.</p>' +
+    '</div>' +
+    '<div class="how-it-works">' +
+      '<h2>How It Works</h2>' +
+      '<div class="how-step"><span class="how-num">1</span><span class="how-text"><strong>Create a tracker</strong> &mdash; give it a name, set how often you want to do it, and pick a color.</span></div>' +
+      '<div class="how-step"><span class="how-num">2</span><span class="how-text"><strong>Bookmark your URL</strong> &mdash; you\'ll get a unique link. Save it to your home screen for easy access.</span></div>' +
+      '<div class="how-step"><span class="how-num">3</span><span class="how-text"><strong>Tap the button</strong> each time you complete the task. A live countdown shows when you\'re due next.</span></div>' +
+    '</div>' +
+    '<div class="create-section" id="create-section">' +
+      '<h2>Create a Tracker</h2>' +
+      '<div class="form-group"><label>Name</label><input id="c-name" placeholder="e.g. Vitamins, Brush, Laundry" maxlength="40"></div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label>Interval</label><input id="c-interval" value="3.5d" placeholder="e.g. 1d, 3.5d, 1w, 12h"></div>' +
+        '<div class="form-group"><label>Color</label><div class="color-grid" id="c-color-grid">' + swatches + '</div></div>' +
+      '</div>' +
+      '<button class="create-btn" id="c-btn" onclick="createTracker()">Create Tracker</button>' +
+    '</div>';
 }
 
 function renderColorPicker(containerId, selected) {
