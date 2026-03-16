@@ -381,13 +381,6 @@ function setupSSE(onEvent) {
   evtSource.addEventListener('db-restored', onEvent);
 }
 
-// ── Decide mode ──
-if (trackerSlug) {
-  initTrackerPage(trackerSlug);
-} else {
-  initLandingPage();
-}
-
 // ═══════════════════════════════════════════════════════════
 // LANDING PAGE
 // ═══════════════════════════════════════════════════════════
@@ -398,6 +391,13 @@ const COLOR_HEX = {
   indigo:'#6366f1', purple:'#8b5cf6', pink:'#ec4899', rose:'#f43f5e',
   gray:'#6b7280', brown:'#92400e', gold:'#d97706'
 };
+
+// ── Decide mode ──
+if (trackerSlug) {
+  initTrackerPage(trackerSlug);
+} else {
+  initLandingPage();
+}
 
 function initLandingPage() {
   document.title = 'Tic Tac Tracker';
