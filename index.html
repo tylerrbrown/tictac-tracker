@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tracker</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    #denied {
+      display: flex; align-items: center; justify-content: center;
+      height: 80vh; font-size: 2rem; color: #333;
+    }
+    #app { display: none; max-width: 480px; width: 100%; }
+    .status-card {
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      transition: background 0.5s ease;
+    }
+    .status-card.green {
+      background: linear-gradient(135deg, #0a3d0a, #1a6b1a);
+      border: 2px solid #2ecc40;
+    }
+    .status-card.red {
+      background: linear-gradient(135deg, #3d0a0a, #6b1a1a);
+      border: 2px solid #e74c3c;
+    }
+    .status-icon { font-size: 3.5rem; margin-bottom: 0.75rem; }
+    .status-label {
+      font-size: 1.3rem; font-weight: 600;
+      margin-bottom: 0.5rem; letter-spacing: 0.5px;
+    }
+    .status-detail {
+      font-size: 1rem; opacity: 0.85;
+      line-height: 1.5;
+    }
+    .countdown {
+      font-size: 2rem; font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      margin-top: 0.75rem; letter-spacing: 1px;
+    }
+    .since {
+      font-size: 0.9rem; opacity: 0.6;
+      margin-top: 0.75rem;
+    }
+    .btn {
+      width: 100%;
+      padding: 1.1rem;
+      font-size: 1.15rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 2rem;
+    }
+    .btn.green-btn {
+      background: #2ecc40;
+      color: #000;
+    }
+    .btn.green-btn:hover { background: #27ae36; transform: scale(1.02); }
+    .btn.red-btn {
+      background: #555;
+      color: #999;
+      cursor: not-allowed;
+    }
+    .log-section h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #666;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #222;
+      padding-bottom: 0.5rem;
+    }
+    .log-entry {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #1a1a1a;
+      font-size: 0.9rem;
+    }
+    .log-entry .log-date { color: #aaa; }
+    .log-entry .log-ago { color: #666; font-size: 0.8rem; }
+    .log-entry:last-child { border-bottom: none; }
+    .empty-log { color: #444; font-style: italic; padding: 1rem 0; }
+    .delete-btn {
+      background: none; border: none; color: #555;
+      cursor: pointer; font-size: 0.8rem; padding: 0.25rem 0.5rem;
+      border-radius: 4px; margin-left: 0.5rem;
+    }
+    .delete-btn:hover { color: #e74c3c; background: #1a1a1a; }
+    .first-time {
+      text-align: center; padding: 3rem 2rem;
+      background: #1a1a1a; border-radius: 20px;
+      margin-bottom: 1.5rem; border: 2px solid #333;
+    }
+    .first-time h2 { margin-bottom: 1rem; font-size: 1.3rem; }
+    .first-time p { color: #888; margin-bottom: 1.5rem; }
+  </style>
+</head>
+<body>
+
+<div id="denied"><span>404</span></div>
+<div id="app"></div>
+
+<script>
+const SECRET = 'x9f2k7m4-b8c1-e3a5-d6w0-q7r9s2t4u1v8';
+const INTERVAL_MS = 3.5 * 24 * 60 * 60 * 1000; // 3.5 days in ms
+const STORAGE_KEY = 'tictac_log_v1';
+
+// --- Access check ---
+const params = new URLSearchParams(window.location.search);
+if (params.get('k') !== SECRET) {
+  document.getElementById('denied').style.display = 'flex';
+} else {
+  document.getElementById('denied').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  init();
+}
+
+function getEntries() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveEntries(entries) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
+
+function init() {
+  render();
+  setInterval(render, 1000);
+}
+
+function logEntry() {
+  const entries = getEntries();
+  entries.push(Date.now());
+  saveEntries(entries);
+  render();
+}
+
+function deleteEntry(index) {
+  const entries = getEntries();
+  entries.splice(index, 1);
+  saveEntries(entries);
+  render();
+}
+
+function formatDuration(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const d = Math.floor(totalSec / 86400);
+  const h = Math.floor((totalSec % 86400) / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  return `${m}m ${s}s`;
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+  }) + ' at ' + d.toLocaleTimeString('en-US', {
+    hour: 'numeric', minute: '2-digit', hour12: true
+  });
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  if (days > 0) return `${days}d ${hours}h ago`;
+  const mins = Math.floor((diff % 3600000) / 60000);
+  if (hours > 0) return `${hours}h ${mins}m ago`;
+  return `${mins}m ago`;
+}
+
+function render() {
+  const entries = getEntries();
+  const app = document.getElementById('app');
+  const last = entries.length > 0 ? entries[entries.length - 1] : null;
+
+  let html = '';
+
+  if (last === null) {
+    html += `
+      <div class="first-time">
+        <div style="font-size:3rem;margin-bottom:1rem">💊</div>
+        <h2>Tic Tac Tracker</h2>
+        <p>Track your twice-weekly schedule.<br>Tap the button when you take one.</p>
+      </div>
+      <button class="btn green-btn" onclick="logEntry()">I just took a Tic Tac</button>
+    `;
+  } else {
+    const elapsed = Date.now() - last;
+    const isReady = elapsed >= INTERVAL_MS;
+
+    if (isReady) {
+      html += `
+        <div class="status-card green">
+          <div class="status-icon">✅</div>
+          <div class="status-label">Ready — Time for your Tic Tac!</div>
+          <div class="status-detail">It's been ${formatDuration(elapsed)} since your last one.</div>
+          <div class="since">Last taken: ${formatDate(last)}</div>
+        </div>
+        <button class="btn green-btn" onclick="logEntry()">I just took a Tic Tac</button>
+      `;
+    } else {
+      const remaining = INTERVAL_MS - elapsed;
+      html += `
+        <div class="status-card red">
+          <div class="status-icon">⏳</div>
+          <div class="status-label">Not Yet</div>
+          <div class="status-detail">Wait a bit longer before your next Tic Tac.</div>
+          <div class="countdown">${formatDuration(remaining)}</div>
+          <div class="status-detail" style="margin-top:0.5rem">remaining</div>
+          <div class="since">Last taken: ${formatDate(last)}</div>
+        </div>
+        <button class="btn red-btn" disabled>Not time yet</button>
+      `;
+    }
+  }
+
+  // Log section
+  html += '<div class="log-section"><h2>History</h2>';
+  if (entries.length === 0) {
+    html += '<div class="empty-log">No entries yet.</div>';
+  } else {
+    // Show newest first
+    for (let i = entries.length - 1; i >= 0; i--) {
+      html += `
+        <div class="log-entry">
+          <span class="log-date">${formatDate(entries[i])}</span>
+          <span>
+            <span class="log-ago">${timeAgo(entries[i])}</span>
+            <button class="delete-btn" onclick="deleteEntry(${i})" title="Delete">✕</button>
+          </span>
+        </div>
+      `;
+    }
+  }
+  html += '</div>';
+
+  app.innerHTML = html;
+}
+</script>
+
+</body>
+</html>
