@@ -9,129 +9,107 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-      background: #0a0a0a;
-      color: #e0e0e0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #111;
+      color: #ddd;
       min-height: 100vh;
       display: flex;
       justify-content: center;
       padding: 2rem 1rem;
-      -webkit-font-smoothing: antialiased;
     }
     #denied {
       display: flex; align-items: center; justify-content: center;
       height: 80vh; font-size: 2rem; color: #222;
     }
-    #app { display: none; max-width: 420px; width: 100%; }
+    #app { display: none; max-width: 400px; width: 100%; }
     .loading { text-align: center; padding: 3rem; color: #555; }
+    .error { text-align: center; padding: 3rem; color: #e74c3c; }
 
     .status-card {
-      border-radius: 24px;
-      padding: 2.5rem 2rem 2rem;
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
       text-align: center;
-      margin-bottom: 1.5rem;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-    }
-    .status-card.green {
-      background: rgba(46, 204, 64, 0.08);
-      border: 1px solid rgba(46, 204, 64, 0.25);
-      box-shadow: 0 0 60px rgba(46, 204, 64, 0.08), inset 0 1px 0 rgba(255,255,255,0.05);
-    }
-    .status-card.red {
-      background: rgba(231, 76, 60, 0.08);
-      border: 1px solid rgba(231, 76, 60, 0.25);
-      box-shadow: 0 0 60px rgba(231, 76, 60, 0.08), inset 0 1px 0 rgba(255,255,255,0.05);
-    }
-
-    .status-label {
-      font-size: 0.75rem; font-weight: 500;
-      text-transform: uppercase; letter-spacing: 3px;
       margin-bottom: 1.25rem;
     }
-    .status-card.green .status-label { color: #2ecc40; }
-    .status-card.red .status-label { color: #e74c3c; }
+    .status-card.green {
+      background: #162e16;
+      border: 1px solid #2a5a2a;
+    }
+    .status-card.red {
+      background: #2e1616;
+      border: 1px solid #5a2a2a;
+    }
+    .status-label {
+      font-size: 0.8rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 0.75rem;
+    }
+    .status-card.green .status-label { color: #4ade80; }
+    .status-card.red .status-label { color: #f87171; }
 
-    .countdown {
-      font-size: 2.8rem; font-weight: 200;
+    .timer {
+      font-size: 1.5rem; font-weight: 600;
       font-variant-numeric: tabular-nums;
-      letter-spacing: 2px;
-      line-height: 1;
-    }
-    .countdown-sub {
-      font-size: 0.7rem; color: #555;
-      text-transform: uppercase; letter-spacing: 4px;
-      margin-top: 0.75rem;
-    }
-    .elapsed {
-      font-size: 1.8rem; font-weight: 200;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
+      color: #fff;
     }
 
     .btn {
       width: 100%;
-      padding: 1rem;
+      padding: 0.9rem;
       font-size: 1rem;
       font-weight: 600;
       border: none;
-      border-radius: 16px;
+      border-radius: 12px;
       cursor: pointer;
-      transition: all 0.15s ease;
-      margin-bottom: 2.5rem;
-      letter-spacing: 0.5px;
+      transition: opacity 0.15s ease;
+      margin-bottom: 2rem;
     }
     .btn.green-btn {
-      background: #2ecc40;
+      background: #22c55e;
       color: #000;
-      box-shadow: 0 4px 20px rgba(46, 204, 64, 0.3);
     }
-    .btn.green-btn:hover { box-shadow: 0 4px 30px rgba(46, 204, 64, 0.5); }
-    .btn.green-btn:active { transform: scale(0.97); }
+    .btn.green-btn:active { opacity: 0.8; }
     .btn.red-btn {
-      background: rgba(255,255,255,0.06);
-      color: #555;
+      background: #333;
+      color: #666;
       cursor: not-allowed;
-      box-shadow: none;
     }
 
     .log-section h2 {
-      font-size: 0.65rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
-      letter-spacing: 3px;
-      color: #444;
-      margin-bottom: 1rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      letter-spacing: 2px;
+      color: #555;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #1e1e1e;
     }
     .log-entry {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.7rem 0;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-      font-size: 0.85rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #1a1a1a;
+      font-size: 0.8rem;
     }
-    .log-entry .log-date { color: #888; }
-    .log-entry .log-ago { color: #444; font-size: 0.75rem; }
+    .log-entry .log-date { color: #999; }
+    .log-entry .log-ago { color: #555; font-size: 0.7rem; }
     .log-entry:last-child { border-bottom: none; }
-    .empty-log { color: #333; font-style: italic; padding: 1rem 0; font-size: 0.85rem; }
+    .empty-log { color: #444; font-style: italic; padding: 1rem 0; font-size: 0.8rem; }
     .delete-btn {
-      background: none; border: none; color: #333;
-      cursor: pointer; font-size: 0.75rem; padding: 0.25rem 0.5rem;
-      border-radius: 6px; margin-left: 0.5rem;
-      transition: all 0.15s ease;
+      background: none; border: none; color: #444;
+      cursor: pointer; font-size: 0.7rem; padding: 0.2rem 0.4rem;
+      border-radius: 4px; margin-left: 0.4rem;
     }
-    .delete-btn:hover { color: #e74c3c; background: rgba(231,76,60,0.1); }
-
+    .delete-btn:active { color: #e74c3c; }
     .first-time {
-      text-align: center; padding: 3rem 2rem;
-      background: rgba(255,255,255,0.03); border-radius: 24px;
-      margin-bottom: 1.5rem;
-      border: 1px solid rgba(255,255,255,0.06);
+      text-align: center; padding: 2.5rem 1.5rem;
+      background: #1a1a1a; border-radius: 16px;
+      margin-bottom: 1.25rem; border: 1px solid #252525;
     }
-    .first-time h2 { margin-bottom: 1rem; font-size: 1.2rem; font-weight: 500; }
-    .first-time p { color: #666; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .first-time h2 { margin-bottom: 0.75rem; font-size: 1.1rem; font-weight: 600; }
+    .first-time p { color: #777; margin-bottom: 1rem; font-size: 0.85rem; }
   </style>
 </head>
 <body>
@@ -157,129 +135,128 @@ if (params.get('k') !== SECRET) {
   init();
 }
 
-async function fetchEntries() {
-  const res = await fetch('/api/entries' + API_KEY);
-  return await res.json();
-}
-
 async function init() {
   try {
-    entries = await fetchEntries();
+    const res = await fetch('/api/entries' + API_KEY);
+    if (!res.ok) throw new Error('Server error ' + res.status);
+    entries = await res.json();
     loaded = true;
     render();
     setInterval(render, 1000);
   } catch(e) {
     document.getElementById('app').innerHTML =
-      '<div class="loading" style="color:#e74c3c">Error: ' + e.message + '</div>';
+      '<div class="error">Failed to load: ' + e.message + '</div>';
   }
 }
 
 async function logEntry() {
-  const res = await fetch('/api/entries' + API_KEY, { method: 'POST' });
-  const entry = await res.json();
-  entries.push(entry);
-  render();
+  try {
+    const res = await fetch('/api/entries' + API_KEY, { method: 'POST' });
+    if (!res.ok) throw new Error('Failed');
+    const entry = await res.json();
+    entries.push(entry);
+    render();
+  } catch(e) {
+    alert('Failed to save. Try again.');
+  }
 }
 
 async function deleteEntry(id, index) {
-  await fetch('/api/entries/' + id + API_KEY, { method: 'DELETE' });
+  const original = [...entries];
   entries.splice(index, 1);
   render();
+  try {
+    const res = await fetch('/api/entries/' + id + API_KEY, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed');
+  } catch(e) {
+    entries = original;
+    render();
+    alert('Failed to delete. Try again.');
+  }
 }
 
-function formatDuration(ms) {
-  const totalSec = Math.floor(ms / 1000);
-  const d = Math.floor(totalSec / 86400);
-  const h = Math.floor((totalSec % 86400) / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  const pad = n => String(n).padStart(2, '0');
-  if (d > 0) return `${d}d ${h}h ${pad(m)}m ${pad(s)}s`;
-  if (h > 0) return `${h}h ${pad(m)}m ${pad(s)}s`;
-  return `${m}m ${pad(s)}s`;
+function fmt(ms) {
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const p = n => String(n).padStart(2, '0');
+  if (d > 0) return `${d}d ${h}h ${p(m)}m ${p(sec)}s`;
+  if (h > 0) return `${h}h ${p(m)}m ${p(sec)}s`;
+  return `${m}m ${p(sec)}s`;
 }
 
-function formatDate(ts) {
+function fmtDate(ts) {
   const d = new Date(ts);
   return d.toLocaleDateString('en-US', {
     weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
-  }) + ' at ' + d.toLocaleTimeString('en-US', {
+  }) + ', ' + d.toLocaleTimeString('en-US', {
     hour: 'numeric', minute: '2-digit', hour12: true
   });
 }
 
-function timeAgo(ts) {
-  const diff = Date.now() - ts;
-  const days = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-  if (days > 0) return `${days}d ${hours}h ago`;
-  const mins = Math.floor((diff % 3600000) / 60000);
-  if (hours > 0) return `${hours}h ${mins}m ago`;
-  return `${mins}m ago`;
+function ago(ts) {
+  const ms = Date.now() - ts;
+  const d = Math.floor(ms / 86400000);
+  const h = Math.floor((ms % 86400000) / 3600000);
+  if (d > 0) return `${d}d ${h}h ago`;
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h > 0) return `${h}h ${m}m ago`;
+  return `${m}m ago`;
 }
 
 function render() {
   if (!loaded) return;
   const app = document.getElementById('app');
   const last = entries.length > 0 ? entries[entries.length - 1] : null;
-
   let html = '';
 
-  if (last === null) {
+  if (!last) {
     html += `
       <div class="first-time">
-        <div style="font-size:2.5rem;margin-bottom:1rem">💊</div>
         <h2>Tic Tac Tracker</h2>
-        <p>Track your twice-weekly schedule.<br>Tap the button when you take one.</p>
+        <p>Twice a week, every 3.5 days.<br>Tap below when you take one.</p>
       </div>
-      <button class="btn green-btn" onclick="logEntry()">I took a Tic Tac</button>
-    `;
+      <button class="btn green-btn" onclick="logEntry()">I took a Tic Tac</button>`;
   } else {
     const elapsed = Date.now() - last.ts;
-    const isReady = elapsed >= INTERVAL_MS;
-
-    if (isReady) {
+    if (elapsed >= INTERVAL_MS) {
       html += `
         <div class="status-card green">
           <div class="status-label">Ready</div>
-          <div class="elapsed">${formatDuration(elapsed)}</div>
-          <div class="countdown-sub">since last dose</div>
+          <div class="timer">${fmt(elapsed)} elapsed</div>
         </div>
-        <button class="btn green-btn" onclick="logEntry()">I took a Tic Tac</button>
-      `;
+        <button class="btn green-btn" onclick="logEntry()">I took a Tic Tac</button>`;
     } else {
-      const remaining = INTERVAL_MS - elapsed;
       html += `
         <div class="status-card red">
           <div class="status-label">Next dose in</div>
-          <div class="countdown">${formatDuration(remaining)}</div>
+          <div class="timer">${fmt(INTERVAL_MS - elapsed)}</div>
         </div>
-        <button class="btn red-btn" disabled>Not yet</button>
-      `;
+        <button class="btn red-btn" disabled>Not yet</button>`;
     }
   }
 
   html += '<div class="log-section"><h2>History</h2>';
-  if (entries.length === 0) {
+  if (!entries.length) {
     html += '<div class="empty-log">No entries yet.</div>';
   } else {
     for (let i = entries.length - 1; i >= 0; i--) {
+      const e = entries[i];
       html += `
         <div class="log-entry">
-          <span class="log-date">${formatDate(entries[i].ts)}</span>
+          <span class="log-date">${fmtDate(e.ts)}</span>
           <span>
-            <span class="log-ago">${timeAgo(entries[i].ts)}</span>
-            <button class="delete-btn" onclick="deleteEntry(${entries[i].id}, ${i})" title="Delete">✕</button>
+            <span class="log-ago">${ago(e.ts)}</span>
+            <button class="delete-btn" onclick="deleteEntry(${e.id},${i})">✕</button>
           </span>
-        </div>
-      `;
+        </div>`;
     }
   }
   html += '</div>';
-
   app.innerHTML = html;
 }
 </script>
-
 </body>
 </html>
