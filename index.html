@@ -10,8 +10,8 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
+      background: #1a1a1a;
+      color: #d4d4d4;
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -19,7 +19,7 @@
     }
     #denied {
       display: flex; align-items: center; justify-content: center;
-      height: 80vh; font-size: 2rem; color: #1e293b;
+      height: 80vh; font-size: 2rem; color: #2a2a2a;
     }
     #app { display: none; max-width: 440px; width: 100%; }
     .loading { text-align: center; padding: 3rem; color: #475569; font-size: 1.1rem; }
@@ -36,8 +36,8 @@
       box-shadow: 0 8px 30px rgba(16, 185, 129, 0.3);
     }
     .status-card.red {
-      background: linear-gradient(135deg, #e11d48, #f43f5e, #fb7185);
-      box-shadow: 0 8px 30px rgba(244, 63, 94, 0.3);
+      background: linear-gradient(135deg, #b91c1c, #dc2626, #ef4444);
+      box-shadow: 0 8px 30px rgba(220, 38, 38, 0.3);
     }
     .status-label {
       font-size: 1.2rem; font-weight: 600;
@@ -68,13 +68,13 @@
     }
     .btn.green-btn:active { opacity: 0.8; }
     .btn.red-btn {
-      background: #1e293b;
-      color: #475569;
+      background: #2a2a2a;
+      color: #6b6b6b;
       cursor: not-allowed;
     }
 
     .log-section {
-      background: #1e293b;
+      background: #2a2a2a;
       border-radius: 16px;
       padding: 1.1rem 1.25rem;
     }
@@ -82,36 +82,36 @@
       font-size: 0.96rem;
       text-transform: uppercase;
       letter-spacing: 2px;
-      color: #475569;
+      color: #6b6b6b;
       margin-bottom: 0.75rem;
       padding-bottom: 0.5rem;
-      border-bottom: 1px solid #2d3a4f;
+      border-bottom: 1px solid #3a3a3a;
     }
     .log-entry {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 0.7rem 0;
-      border-bottom: 1px solid #252f3f;
+      border-bottom: 1px solid #3a3a3a;
       font-size: 1.14rem;
     }
-    .log-entry .log-date { color: #94a3b8; }
-    .log-entry .log-ago { color: #475569; font-size: 1.02rem; }
+    .log-entry .log-date { color: #a3a3a3; }
+    .log-entry .log-ago { color: #6b6b6b; font-size: 1.02rem; }
     .log-entry:last-child { border-bottom: none; }
-    .empty-log { color: #475569; font-style: italic; padding: 1rem 0; font-size: 1.14rem; }
+    .empty-log { color: #6b6b6b; font-style: italic; padding: 1rem 0; font-size: 1.14rem; }
     .delete-btn {
-      background: none; border: none; color: #475569;
+      background: none; border: none; color: #6b6b6b;
       cursor: pointer; font-size: 1.02rem; padding: 0.3rem 0.5rem;
       border-radius: 4px; margin-left: 0.5rem;
     }
     .delete-btn:active { color: #f43f5e; }
     .first-time {
       text-align: center; padding: 2.5rem 1.5rem;
-      background: #1e293b; border-radius: 20px;
+      background: #2a2a2a; border-radius: 20px;
       margin-bottom: 1.25rem;
     }
-    .first-time h2 { margin-bottom: 0.75rem; font-size: 1.56rem; font-weight: 600; color: #e2e8f0; }
-    .first-time p { color: #94a3b8; margin-bottom: 1rem; font-size: 1.2rem; }
+    .first-time h2 { margin-bottom: 0.75rem; font-size: 1.56rem; font-weight: 600; color: #d4d4d4; }
+    .first-time p { color: #a3a3a3; margin-bottom: 1rem; font-size: 1.2rem; }
   </style>
 </head>
 <body>
@@ -282,120 +282,7 @@ function renderFull() {
     }
   }
   html += '</div>';
-
-  // Theme switcher
-  html += `
-    <div style="display:flex;gap:0.5rem;margin-top:1.5rem;justify-content:center;">
-      <button onclick="setTheme('A')" style="padding:0.5rem 1.2rem;border-radius:8px;border:none;font-weight:600;font-size:1rem;cursor:pointer;background:#0e7490;color:#fff;">A</button>
-      <button onclick="setTheme('B')" style="padding:0.5rem 1.2rem;border-radius:8px;border:none;font-weight:600;font-size:1rem;cursor:pointer;background:#7c3aed;color:#fff;">B</button>
-      <button onclick="setTheme('C')" style="padding:0.5rem 1.2rem;border-radius:8px;border:none;font-weight:600;font-size:1rem;cursor:pointer;background:#ea580c;color:#fff;">C</button>
-    </div>`;
-
   app.innerHTML = html;
-}
-
-const themes = {
-  A: { // Ocean
-    bg: '#0c1222',
-    cardBg: '#152238',
-    text: '#cbd5e1',
-    muted: '#64748b',
-    dimmed: '#475569',
-    border: '#1e3a5f',
-    greenGrad: 'linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf)',
-    greenSolid: '#14b8a6',
-    greenShadow: 'rgba(20, 184, 166, 0.35)',
-    greenBtnShadow: 'rgba(20, 184, 166, 0.4)',
-    redGrad: 'linear-gradient(135deg, #0369a1, #0284c7, #38bdf8)',
-    redShadow: 'rgba(56, 189, 248, 0.3)',
-    disabledBg: '#152238',
-    disabledColor: '#475569',
-  },
-  B: { // Midnight Purple
-    bg: '#13111c',
-    cardBg: '#1e1b2e',
-    text: '#d4d0e8',
-    muted: '#8b83a8',
-    dimmed: '#5b5478',
-    border: '#2a2545',
-    greenGrad: 'linear-gradient(135deg, #059669, #10b981, #34d399)',
-    greenSolid: '#10b981',
-    greenShadow: 'rgba(16, 185, 129, 0.35)',
-    greenBtnShadow: 'rgba(16, 185, 129, 0.4)',
-    redGrad: 'linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa)',
-    redShadow: 'rgba(139, 92, 246, 0.3)',
-    disabledBg: '#1e1b2e',
-    disabledColor: '#5b5478',
-  },
-  C: { // Warm Dark
-    bg: '#1a1a1a',
-    cardBg: '#2a2a2a',
-    text: '#d4d4d4',
-    muted: '#a3a3a3',
-    dimmed: '#6b6b6b',
-    border: '#3a3a3a',
-    greenGrad: 'linear-gradient(135deg, #059669, #10b981, #34d399)',
-    greenSolid: '#10b981',
-    greenShadow: 'rgba(16, 185, 129, 0.35)',
-    greenBtnShadow: 'rgba(16, 185, 129, 0.4)',
-    redGrad: 'linear-gradient(135deg, #c2410c, #ea580c, #fb923c)',
-    redShadow: 'rgba(234, 88, 12, 0.3)',
-    disabledBg: '#2a2a2a',
-    disabledColor: '#6b6b6b',
-  }
-};
-
-function setTheme(key) {
-  const t = themes[key];
-  if (!t) return;
-  document.body.style.background = t.bg;
-  document.body.style.color = t.text;
-
-  const card = document.querySelector('.status-card');
-  if (card) {
-    if (card.classList.contains('green')) {
-      card.style.background = t.greenGrad;
-      card.style.boxShadow = '0 8px 30px ' + t.greenShadow;
-    } else {
-      card.style.background = t.redGrad;
-      card.style.boxShadow = '0 8px 30px ' + t.redShadow;
-    }
-  }
-
-  const greenBtn = document.querySelector('.green-btn');
-  if (greenBtn) {
-    greenBtn.style.background = t.greenSolid;
-    greenBtn.style.boxShadow = '0 4px 20px ' + t.greenBtnShadow;
-  }
-  const redBtn = document.querySelector('.red-btn');
-  if (redBtn) {
-    redBtn.style.background = t.disabledBg;
-    redBtn.style.color = t.disabledColor;
-  }
-
-  const logSection = document.querySelector('.log-section');
-  if (logSection) {
-    logSection.style.background = t.cardBg;
-  }
-  const logH2 = document.querySelector('.log-section h2');
-  if (logH2) {
-    logH2.style.color = t.dimmed;
-    logH2.style.borderBottomColor = t.border;
-  }
-  document.querySelectorAll('.log-entry').forEach(el => {
-    el.style.borderBottomColor = t.border;
-  });
-  document.querySelectorAll('.log-date').forEach(el => {
-    el.style.color = t.muted;
-  });
-  document.querySelectorAll('.log-ago').forEach(el => {
-    el.style.color = t.dimmed;
-  });
-  document.querySelectorAll('.delete-btn').forEach(el => {
-    el.style.color = t.dimmed;
-  });
-
-  localStorage.setItem('tictac-theme', key);
 }
 </script>
 </body>
