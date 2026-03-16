@@ -135,8 +135,10 @@ if (params.get('k') !== SECRET) {
   init();
 }
 
+const API_KEY = `?k=${SECRET}`;
+
 async function fetchEntries() {
-  const res = await fetch('/api/entries');
+  const res = await fetch('/api/entries' + API_KEY);
   return await res.json();
 }
 
@@ -148,14 +150,14 @@ async function init() {
 }
 
 async function logEntry() {
-  const res = await fetch('/api/entries', { method: 'POST' });
+  const res = await fetch('/api/entries' + API_KEY, { method: 'POST' });
   const entry = await res.json();
   entries.push(entry);
   render();
 }
 
 async function deleteEntry(id, index) {
-  await fetch('/api/entries/' + id, { method: 'DELETE' });
+  await fetch('/api/entries/' + id + API_KEY, { method: 'DELETE' });
   entries.splice(index, 1);
   render();
 }

@@ -6,9 +6,11 @@ import os
 import sqlite3
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from urllib.parse import urlparse, parse_qs
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(APP_DIR, "tictac.db")
+SECRET = "x9f2k7m4-b8c1-e3a5-d6w0-q7r9s2t4u1v8"
 
 
 def get_db():
@@ -22,10 +24,20 @@ def get_db():
 
 
 class Handler(BaseHTTPRequestHandler):
+    def _check_key(self):
+        parsed = urlparse(self.path)
+        params = parse_qs(parsed.query)
+        if params.get("k", [None])[0] != SECRET:
+            self._not_found()
+            return False
+        return True
+
     def do_GET(self):
         if self.path == "/" or self.path.startswith("/?"):
             self._serve_file("index.html", "text/html")
-        elif self.path == "/api/entries":
+        elif self.path.startswith("/api/entries"):
+            if not self._check_key():
+                return
             conn = get_db()
             rows = conn.execute("SELECT id, ts FROM entries ORDER BY ts ASC").fetchall()
             conn.close()
@@ -34,7 +46,9 @@ class Handler(BaseHTTPRequestHandler):
             self._not_found()
 
     def do_POST(self):
-        if self.path == "/api/entries":
+        if self.path.startswith("/api/entries"):
+            if not self._check_key():
+                return
             ts = int(time.time() * 1000)
             conn = get_db()
             cur = conn.execute("INSERT INTO entries (ts) VALUES (?)", (ts,))
@@ -47,8 +61,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_DELETE(self):
         if self.path.startswith("/api/entries/"):
+            if not self._check_key():
+                return
             try:
-                entry_id = int(self.path.split("/")[-1])
+                entry_id = int(self.path.split("/")[-1].split("?")[0])
             except ValueError:
                 self._not_found()
                 return
