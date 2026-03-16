@@ -91,11 +91,17 @@
     }
     .form-group label {
       display: block;
-      font-size: 0.82rem;
+      font-size: 0.75rem;
       color: #a3a3a3;
       margin-bottom: 0.25rem;
       text-transform: uppercase;
       letter-spacing: 1px;
+    }
+    .form-group label .eg {
+      text-transform: none;
+      font-size: 0.7rem;
+      letter-spacing: 0;
+      color: #737373;
     }
     .form-group input, .form-group select {
       width: 100%;
@@ -429,7 +435,7 @@ function renderLanding() {
       '<h2>Create a Tracker</h2>' +
       '<div class="form-group"><label>Name</label><input id="c-name" placeholder="e.g. Vitamins, Brush, Laundry" maxlength="40"></div>' +
       '<div class="form-row">' +
-        '<div class="form-group"><label>Interval (e.g. 1d, 3.5d, 1w, 12h)</label><input id="c-interval" value="1d"></div>' +
+        '<div class="form-group"><label>Interval <span class="eg">(e.g. 1d, 3.5d, 1w, 12h)</span></label><input id="c-interval" value="1d"></div>' +
         '<div class="form-group"><label>Color</label><div class="color-grid" id="c-color-grid">' + swatches + '</div></div>' +
       '</div>' +
       '<button class="create-btn" id="c-btn" onclick="createTracker()">Create Tracker</button>' +
@@ -499,8 +505,6 @@ function showResult(tracker) {
       <div class="result-actions">
         <button class="btn-copy" onclick="copyURL()">Copy URL</button>
         <a class="btn-open" href="${url}">Open Tracker</a>
-      </div>
-      <div style="margin-top:0.75rem">
         <button class="btn-another" onclick="renderLanding()">Create Another</button>
       </div>
     </div>
