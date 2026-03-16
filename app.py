@@ -24,6 +24,8 @@ def get_db():
 
 
 class Handler(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+
     def _check_key(self):
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
