@@ -15,19 +15,19 @@
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      padding: 2rem 1rem;
+      padding: 1.5rem 1rem;
     }
     #denied {
       display: flex; align-items: center; justify-content: center;
       height: 80vh; font-size: 2rem; color: #1e293b;
     }
-    #app { display: none; max-width: 400px; width: 100%; }
-    .loading { text-align: center; padding: 3rem; color: #475569; }
-    .error { text-align: center; padding: 3rem; color: #f43f5e; }
+    #app { display: none; max-width: 440px; width: 100%; }
+    .loading { text-align: center; padding: 3rem; color: #475569; font-size: 1.1rem; }
+    .error { text-align: center; padding: 3rem; color: #f43f5e; font-size: 1.1rem; }
 
     .status-card {
       border-radius: 20px;
-      padding: 2rem 1.5rem;
+      padding: 2.25rem 1.5rem;
       text-align: center;
       margin-bottom: 1.25rem;
     }
@@ -40,26 +40,25 @@
       box-shadow: 0 8px 30px rgba(244, 63, 94, 0.3);
     }
     .status-label {
-      font-size: 0.85rem; font-weight: 600;
+      font-size: 1rem; font-weight: 600;
       text-transform: uppercase; letter-spacing: 2px;
       margin-bottom: 0.75rem;
-      color: rgba(255,255,255,0.8);
+      color: rgba(255,255,255,0.85);
     }
-    .timer {
-      font-size: 1.7rem; font-weight: 700;
+    #timer {
+      font-size: 2.4rem; font-weight: 700;
       font-variant-numeric: tabular-nums;
       color: #fff;
     }
 
     .btn {
       width: 100%;
-      padding: 1rem;
-      font-size: 1.05rem;
+      padding: 1.1rem;
+      font-size: 1.15rem;
       font-weight: 600;
       border: none;
       border-radius: 14px;
       cursor: pointer;
-      transition: opacity 0.15s ease;
       margin-bottom: 2rem;
     }
     .btn.green-btn {
@@ -77,10 +76,10 @@
     .log-section {
       background: #1e293b;
       border-radius: 16px;
-      padding: 1rem 1.25rem;
+      padding: 1.1rem 1.25rem;
     }
     .log-section h2 {
-      font-size: 0.7rem;
+      font-size: 0.8rem;
       text-transform: uppercase;
       letter-spacing: 2px;
       color: #475569;
@@ -92,18 +91,18 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.65rem 0;
+      padding: 0.7rem 0;
       border-bottom: 1px solid #252f3f;
-      font-size: 0.85rem;
+      font-size: 0.95rem;
     }
     .log-entry .log-date { color: #94a3b8; }
-    .log-entry .log-ago { color: #475569; font-size: 0.75rem; }
+    .log-entry .log-ago { color: #475569; font-size: 0.85rem; }
     .log-entry:last-child { border-bottom: none; }
-    .empty-log { color: #475569; font-style: italic; padding: 1rem 0; font-size: 0.85rem; }
+    .empty-log { color: #475569; font-style: italic; padding: 1rem 0; font-size: 0.95rem; }
     .delete-btn {
       background: none; border: none; color: #475569;
-      cursor: pointer; font-size: 0.75rem; padding: 0.25rem 0.5rem;
-      border-radius: 4px; margin-left: 0.4rem;
+      cursor: pointer; font-size: 0.85rem; padding: 0.3rem 0.5rem;
+      border-radius: 4px; margin-left: 0.5rem;
     }
     .delete-btn:active { color: #f43f5e; }
     .first-time {
@@ -111,8 +110,8 @@
       background: #1e293b; border-radius: 20px;
       margin-bottom: 1.25rem;
     }
-    .first-time h2 { margin-bottom: 0.75rem; font-size: 1.15rem; font-weight: 600; color: #e2e8f0; }
-    .first-time p { color: #94a3b8; margin-bottom: 1rem; font-size: 0.9rem; }
+    .first-time h2 { margin-bottom: 0.75rem; font-size: 1.3rem; font-weight: 600; color: #e2e8f0; }
+    .first-time p { color: #94a3b8; margin-bottom: 1rem; font-size: 1rem; }
   </style>
 </head>
 <body>
@@ -125,7 +124,6 @@ const SECRET = 'x9f2k7m4-b8c1-e3a5-d6w0-q7r9s2t4u1v8';
 const INTERVAL_MS = 3.5 * 24 * 60 * 60 * 1000;
 
 let entries = [];
-let loaded = false;
 const API_KEY = `?k=${SECRET}`;
 
 const params = new URLSearchParams(window.location.search);
@@ -143,9 +141,8 @@ async function init() {
     const res = await fetch('/api/entries' + API_KEY);
     if (!res.ok) throw new Error('Server error ' + res.status);
     entries = await res.json();
-    loaded = true;
-    render();
-    setInterval(render, 1000);
+    renderFull();
+    setInterval(tickTimer, 1000);
   } catch(e) {
     document.getElementById('app').innerHTML =
       '<div class="error">Failed to load: ' + e.message + '</div>';
@@ -158,7 +155,7 @@ async function logEntry() {
     if (!res.ok) throw new Error('Failed');
     const entry = await res.json();
     entries.push(entry);
-    render();
+    renderFull();
   } catch(e) {
     alert('Failed to save. Try again.');
   }
@@ -167,13 +164,13 @@ async function logEntry() {
 async function deleteEntry(id, index) {
   const original = [...entries];
   entries.splice(index, 1);
-  render();
+  renderFull();
   try {
     const res = await fetch('/api/entries/' + id + API_KEY, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed');
   } catch(e) {
     entries = original;
-    render();
+    renderFull();
     alert('Failed to delete. Try again.');
   }
 }
@@ -209,8 +206,24 @@ function ago(ts) {
   return `${m}m ago`;
 }
 
-function render() {
-  if (!loaded) return;
+// Only updates the timer text — no DOM rebuild
+function tickTimer() {
+  const el = document.getElementById('timer');
+  if (!el || !entries.length) return;
+  const last = entries[entries.length - 1];
+  const elapsed = Date.now() - last.ts;
+  if (elapsed >= INTERVAL_MS) {
+    el.textContent = fmt(elapsed) + ' elapsed';
+    // Switch card to green if it was red
+    const card = el.closest('.status-card');
+    if (card && card.classList.contains('red')) renderFull();
+  } else {
+    el.textContent = fmt(INTERVAL_MS - elapsed);
+  }
+}
+
+// Full rebuild — only on data changes
+function renderFull() {
   const app = document.getElementById('app');
   const last = entries.length > 0 ? entries[entries.length - 1] : null;
   let html = '';
@@ -228,14 +241,14 @@ function render() {
       html += `
         <div class="status-card green">
           <div class="status-label">Ready</div>
-          <div class="timer">${fmt(elapsed)} elapsed</div>
+          <div id="timer">${fmt(elapsed)} elapsed</div>
         </div>
         <button class="btn green-btn" onclick="logEntry()">I took a Tic Tac</button>`;
     } else {
       html += `
         <div class="status-card red">
           <div class="status-label">Next dose in</div>
-          <div class="timer">${fmt(INTERVAL_MS - elapsed)}</div>
+          <div id="timer">${fmt(INTERVAL_MS - elapsed)}</div>
         </div>
         <button class="btn red-btn" disabled>Not yet</button>`;
     }
