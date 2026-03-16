@@ -152,7 +152,8 @@ function fmtInterval() {
 }
 
 let entries = [];
-const API_PARAMS = `?k=${SECRET}&name=${encodeURIComponent(TRACKER_NAME)}`;
+const nameParam = params.get('name') ? `&name=${encodeURIComponent(params.get('name'))}` : '';
+const API_PARAMS = `?k=${SECRET}${nameParam}`;
 
 document.title = TRACKER_NAME + ' Tracker';
 
