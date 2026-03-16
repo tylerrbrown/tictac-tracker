@@ -5,6 +5,7 @@ import csv
 import io
 import json
 import os
+import re
 import sqlite3
 import threading
 import time
@@ -56,8 +57,37 @@ def seed_trackers(conn):
     conn.commit()
 
 
+VALID_COLORS = {
+    "red", "orange", "yellow", "lime", "green", "teal", "cyan",
+    "blue", "indigo", "purple", "pink", "rose", "gray", "brown", "gold"
+}
+
+INTERVAL_RE = re.compile(r"^(\d+\.?\d*)\s*(m|h|d|w)$", re.IGNORECASE)
+
+MAX_INTERVAL = {"m": 525960, "h": 8766, "d": 365, "w": 52}
+
+
+def validate_interval(s):
+    """Return (ok, error_msg). Validates format + reasonable range."""
+    if not s or not isinstance(s, str):
+        return False, "interval is required"
+    m = INTERVAL_RE.match(s.strip())
+    if not m:
+        return False, "invalid interval format — use a number + unit (m, h, d, w), e.g. 1d, 3.5d, 1w, 12h"
+    val = float(m.group(1))
+    unit = m.group(2).lower()
+    if val <= 0:
+        return False, "interval must be greater than zero"
+    if val > MAX_INTERVAL[unit]:
+        return False, f"interval too large — max is {MAX_INTERVAL[unit]}{unit}"
+    return True, None
+
+
 def slugify(name):
-    return name.strip().lower().replace(" ", "-")
+    s = name.strip().lower()
+    s = re.sub(r"[^a-z0-9\s-]", "", s)
+    s = re.sub(r"[\s-]+", "-", s).strip("-")
+    return s
 
 
 def broadcast_sse(event_type, data):
@@ -348,9 +378,21 @@ class Handler(BaseHTTPRequestHandler):
         if not display_name:
             self._json_response({"error": "display_name required"}, 400)
             return
+        if len(display_name) > 40:
+            self._json_response({"error": "name too long (max 40 characters)"}, 400)
+            return
         slug = slugify(display_name)
+        if not slug:
+            self._json_response({"error": "name must contain at least one letter or number"}, 400)
+            return
         interval = body.get("interval", "3.5d")
+        ok, err = validate_interval(interval)
+        if not ok:
+            self._json_response({"error": err}, 400)
+            return
         color = body.get("color", "orange")
+        if color not in VALID_COLORS:
+            color = "orange"
         conn = get_db()
         existing = conn.execute(
             "SELECT 1 FROM trackers WHERE slug = ?", (slug,)
@@ -384,9 +426,28 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         display_name = body.get("display_name", row[1]).strip()
-        interval = body.get("interval", row[2])
-        color = body.get("color", row[3])
+        if not display_name:
+            conn.close()
+            self._json_response({"error": "name is required"}, 400)
+            return
+        if len(display_name) > 40:
+            conn.close()
+            self._json_response({"error": "name too long (max 40 characters)"}, 400)
+            return
         new_slug = slugify(display_name)
+        if not new_slug:
+            conn.close()
+            self._json_response({"error": "name must contain at least one letter or number"}, 400)
+            return
+        interval = body.get("interval", row[2])
+        ok, err = validate_interval(interval)
+        if not ok:
+            conn.close()
+            self._json_response({"error": err}, 400)
+            return
+        color = body.get("color", row[3])
+        if color not in VALID_COLORS:
+            color = "orange"
 
         if new_slug != old_slug:
             # Check for slug collision

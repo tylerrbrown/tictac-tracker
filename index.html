@@ -116,6 +116,16 @@
       outline: none;
       border-color: #3b82f6;
     }
+    .form-group input.invalid {
+      border-color: #dc2626;
+    }
+    .form-error {
+      color: #f43f5e;
+      font-size: 0.78rem;
+      margin-top: 0.25rem;
+      text-transform: none;
+      letter-spacing: 0;
+    }
     .form-row {
       display: flex;
       gap: 0.75rem;
@@ -318,19 +328,21 @@ const COLORS = {
 
 function parseInterval(str) {
   const m = str.match(/^([\d.]+)\s*(d|h|m|w)$/i);
-  if (!m) return 3.5 * 24 * 60 * 60 * 1000;
+  if (!m) return 0;
   const val = parseFloat(m[1]);
+  if (val <= 0 || isNaN(val)) return 0;
   switch (m[2].toLowerCase()) {
     case 'w': return val * 7 * 24 * 60 * 60 * 1000;
     case 'd': return val * 24 * 60 * 60 * 1000;
     case 'h': return val * 60 * 60 * 1000;
     case 'm': return val * 60 * 1000;
-    default: return val * 24 * 60 * 60 * 1000;
+    default: return 0;
   }
 }
 
 function fmtIntervalStr(str) {
   const ms = parseInterval(str);
+  if (!ms) return str;
   const days = ms / (24 * 60 * 60 * 1000);
   if (days >= 7 && days % 7 === 0) return (days / 7) + (days / 7 === 1 ? ' week' : ' weeks');
   if (days >= 1) return days + (days === 1 ? ' day' : ' days');
@@ -458,14 +470,46 @@ window.pickColor = function(el) {
   el.classList.add('selected');
 };
 
+function clearErrors() {
+  document.querySelectorAll('.form-error').forEach(e => e.remove());
+  document.querySelectorAll('.invalid').forEach(e => e.classList.remove('invalid'));
+}
+
+function showFieldError(inputId, msg) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  input.classList.add('invalid');
+  const err = document.createElement('div');
+  err.className = 'form-error';
+  err.textContent = msg;
+  input.parentElement.appendChild(err);
+}
+
 window.createTracker = async function() {
-  const name = document.getElementById('c-name').value.trim();
-  const interval = document.getElementById('c-interval').value.trim();
+  clearErrors();
+  const nameEl = document.getElementById('c-name');
+  const intervalEl = document.getElementById('c-interval');
+  const name = nameEl.value.trim();
+  const interval = intervalEl.value.trim();
   const color = document.querySelector('#c-color-grid .color-swatch.selected')?.dataset.color || 'orange';
   const btn = document.getElementById('c-btn');
 
-  if (!name) { document.getElementById('c-name').focus(); return; }
-  if (!parseInterval(interval)) { document.getElementById('c-interval').focus(); return; }
+  let valid = true;
+  if (!name) {
+    showFieldError('c-name', 'Name is required');
+    valid = false;
+  } else if (name.length > 40) {
+    showFieldError('c-name', 'Max 40 characters');
+    valid = false;
+  }
+  if (!interval) {
+    showFieldError('c-interval', 'Interval is required');
+    valid = false;
+  } else if (!parseInterval(interval)) {
+    showFieldError('c-interval', 'Use a number + unit: m, h, d, or w');
+    valid = false;
+  }
+  if (!valid) return;
 
   btn.disabled = true;
   btn.textContent = 'Creating...';
@@ -479,8 +523,20 @@ window.createTracker = async function() {
     if (!res.ok) {
       const err = await res.json();
       btn.disabled = false;
-      btn.textContent = err.error === 'tracker already exists' ? 'Name already taken' : 'Failed — try again';
-      setTimeout(() => { btn.textContent = 'Create Tracker'; }, 2000);
+      if (err.error) {
+        btn.textContent = 'Create Tracker';
+        if (err.error.includes('already exists') || err.error.includes('name')) {
+          showFieldError('c-name', err.error);
+        } else if (err.error.includes('interval')) {
+          showFieldError('c-interval', err.error);
+        } else {
+          btn.textContent = err.error;
+          setTimeout(() => { btn.textContent = 'Create Tracker'; }, 3000);
+        }
+      } else {
+        btn.textContent = 'Failed — try again';
+        setTimeout(() => { btn.textContent = 'Create Tracker'; }, 2000);
+      }
       return;
     }
     const tracker = await res.json();
@@ -550,7 +606,7 @@ async function initTrackerPage(slug) {
       throw new Error('Server error ' + cfgRes.status);
     }
     trackerConfig = await cfgRes.json();
-    INTERVAL_MS = parseInterval(trackerConfig.interval);
+    INTERVAL_MS = parseInterval(trackerConfig.interval) || (3.5 * 24 * 60 * 60 * 1000);
     CC = COLORS[trackerConfig.color] || COLORS.orange;
     document.title = trackerConfig.display_name + ' Tracker';
 
@@ -570,7 +626,7 @@ async function initTrackerPage(slug) {
         const cr = await fetch(`/api/tracker/${encodeURIComponent(data.slug || slug)}`);
         if (cr.ok) {
           trackerConfig = await cr.json();
-          INTERVAL_MS = parseInterval(trackerConfig.interval);
+          INTERVAL_MS = parseInterval(trackerConfig.interval) || (3.5 * 24 * 60 * 60 * 1000);
           CC = COLORS[trackerConfig.color] || COLORS.orange;
           document.title = trackerConfig.display_name + ' Tracker';
           // If slug changed, update URL

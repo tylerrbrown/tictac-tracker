@@ -537,6 +537,9 @@ window.createTracker = async function() {
   const interval = document.getElementById('m-interval').value.trim();
   const color = document.querySelector('#m-color-grid .color-swatch.selected')?.dataset.color || 'orange';
   if (!name) { toast('Name is required', true); return; }
+  if (name.length > 40) { toast('Name too long (max 40 characters)', true); return; }
+  if (!interval) { toast('Interval is required', true); return; }
+  if (!parseInterval(interval)) { toast('Invalid interval — use number + m/h/d/w (e.g. 1d, 12h)', true); return; }
   const res = await fetch(API('/api/trackers'), {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -585,6 +588,9 @@ window.saveTracker = async function(slug) {
   const interval = document.getElementById('m-interval').value.trim();
   const color = document.querySelector('#m-color-grid .color-swatch.selected')?.dataset.color || 'orange';
   if (!name) { toast('Name is required', true); return; }
+  if (name.length > 40) { toast('Name too long (max 40 characters)', true); return; }
+  if (!interval) { toast('Interval is required', true); return; }
+  if (!parseInterval(interval)) { toast('Invalid interval — use number + m/h/d/w (e.g. 1d, 12h)', true); return; }
   const res = await fetch(API(`/api/trackers/${encodeURIComponent(slug)}`), {
     method: 'PUT',
     headers: {'Content-Type': 'application/json'},
@@ -676,6 +682,8 @@ window.saveManualEntry = async function(slug) {
   const val = document.getElementById('m-ts').value;
   if (!val) { toast('Date is required', true); return; }
   const ts = new Date(val).getTime();
+  if (isNaN(ts)) { toast('Invalid date', true); return; }
+  if (ts > Date.now() + 86400000) { toast('Date cannot be more than 1 day in the future', true); return; }
   // POST then PUT to set custom timestamp
   const res = await fetch(API(`/api/entries?name=${encodeURIComponent(slug)}`), { method: 'POST' });
   if (res.ok) {
@@ -830,19 +838,21 @@ function toast(msg, isError) {
 // ── Helpers ──
 function parseInterval(str) {
   const m = str.match(/^([\d.]+)\s*(d|h|m|w)$/i);
-  if (!m) return 3.5 * 24 * 60 * 60 * 1000;
+  if (!m) return 0;
   const val = parseFloat(m[1]);
+  if (val <= 0 || isNaN(val)) return 0;
   switch (m[2].toLowerCase()) {
     case 'w': return val * 7 * 24 * 60 * 60 * 1000;
     case 'd': return val * 24 * 60 * 60 * 1000;
     case 'h': return val * 60 * 60 * 1000;
     case 'm': return val * 60 * 1000;
-    default: return val * 24 * 60 * 60 * 1000;
+    default: return 0;
   }
 }
 
 function fmtIntervalStr(str) {
   const ms = parseInterval(str);
+  if (!ms) return str;
   const days = ms / (24 * 60 * 60 * 1000);
   if (days >= 7 && days % 7 === 0) return (days / 7) + (days / 7 === 1 ? ' week' : ' weeks');
   if (days >= 1) return days + (days === 1 ? ' day' : ' days');
