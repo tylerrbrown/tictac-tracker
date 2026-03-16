@@ -17,7 +17,8 @@ def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.execute(
         "CREATE TABLE IF NOT EXISTS entries "
-        "(id INTEGER PRIMARY KEY AUTOINCREMENT, ts BIGINT NOT NULL)"
+        "(id INTEGER PRIMARY KEY AUTOINCREMENT, ts BIGINT NOT NULL, "
+        "tracker TEXT NOT NULL DEFAULT 'tictac')"
     )
     conn.commit()
     return conn
@@ -26,22 +27,37 @@ def get_db():
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
-    def _check_key(self):
+    def _parse(self):
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
+        return params
+
+    def _check_key(self, params=None):
+        if params is None:
+            params = self._parse()
         if params.get("k", [None])[0] != SECRET:
             self._not_found()
             return False
         return True
 
+    def _tracker(self, params=None):
+        if params is None:
+            params = self._parse()
+        return params.get("name", ["tictac"])[0].lower().replace(" ", "-")
+
     def do_GET(self):
         if self.path == "/" or self.path.startswith("/?"):
             self._serve_file("index.html", "text/html")
         elif self.path.startswith("/api/entries"):
-            if not self._check_key():
+            params = self._parse()
+            if not self._check_key(params):
                 return
+            tracker = self._tracker(params)
             conn = get_db()
-            rows = conn.execute("SELECT id, ts FROM entries ORDER BY ts ASC").fetchall()
+            rows = conn.execute(
+                "SELECT id, ts FROM entries WHERE tracker = ? ORDER BY ts ASC",
+                (tracker,)
+            ).fetchall()
             conn.close()
             self._json_response([{"id": r[0], "ts": r[1]} for r in rows])
         else:
@@ -49,11 +65,15 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         if self.path.startswith("/api/entries"):
-            if not self._check_key():
+            params = self._parse()
+            if not self._check_key(params):
                 return
+            tracker = self._tracker(params)
             ts = int(time.time() * 1000)
             conn = get_db()
-            cur = conn.execute("INSERT INTO entries (ts) VALUES (?)", (ts,))
+            cur = conn.execute(
+                "INSERT INTO entries (ts, tracker) VALUES (?, ?)", (ts, tracker)
+            )
             conn.commit()
             entry_id = cur.lastrowid
             conn.close()
@@ -63,7 +83,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_PUT(self):
         if self.path.startswith("/api/entries/"):
-            if not self._check_key():
+            params = self._parse()
+            if not self._check_key(params):
                 return
             try:
                 entry_id = int(self.path.split("/")[-1].split("?")[0])
@@ -86,7 +107,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_DELETE(self):
         if self.path.startswith("/api/entries/"):
-            if not self._check_key():
+            params = self._parse()
+            if not self._check_key(params):
                 return
             try:
                 entry_id = int(self.path.split("/")[-1].split("?")[0])
