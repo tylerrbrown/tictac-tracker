@@ -61,6 +61,29 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._not_found()
 
+    def do_PUT(self):
+        if self.path.startswith("/api/entries/"):
+            if not self._check_key():
+                return
+            try:
+                entry_id = int(self.path.split("/")[-1].split("?")[0])
+            except ValueError:
+                self._not_found()
+                return
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length)) if length else {}
+            ts = body.get("ts")
+            if not ts:
+                self._json_response({"error": "ts required"}, 400)
+                return
+            conn = get_db()
+            conn.execute("UPDATE entries SET ts = ? WHERE id = ?", (int(ts), entry_id))
+            conn.commit()
+            conn.close()
+            self._json_response({"id": entry_id, "ts": int(ts)})
+        else:
+            self._not_found()
+
     def do_DELETE(self):
         if self.path.startswith("/api/entries/"):
             if not self._check_key():
