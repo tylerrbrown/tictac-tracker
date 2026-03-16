@@ -149,7 +149,13 @@ async function init() {
   }
 }
 
+let saving = false;
+
 async function logEntry() {
+  if (saving) return;
+  saving = true;
+  const btn = document.querySelector('.green-btn');
+  if (btn) { btn.textContent = 'Saving...'; btn.style.opacity = '0.6'; }
   try {
     const res = await fetch('/api/entries' + API_KEY, { method: 'POST' });
     if (!res.ok) throw new Error('Failed');
@@ -157,8 +163,9 @@ async function logEntry() {
     entries.push(entry);
     renderFull();
   } catch(e) {
-    alert('Failed to save. Try again.');
+    if (btn) { btn.textContent = 'Failed — tap to retry'; btn.style.opacity = '1'; }
   }
+  saving = false;
 }
 
 async function deleteEntry(id, index) {
@@ -171,7 +178,6 @@ async function deleteEntry(id, index) {
   } catch(e) {
     entries = original;
     renderFull();
-    alert('Failed to delete. Try again.');
   }
 }
 
