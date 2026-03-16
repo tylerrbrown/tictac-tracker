@@ -123,6 +123,7 @@ const INTERVAL_MS = 3.5 * 24 * 60 * 60 * 1000; // 3.5 days in ms
 
 let entries = [];
 let loaded = false;
+const API_KEY = `?k=${SECRET}`;
 
 // --- Access check ---
 const params = new URLSearchParams(window.location.search);
@@ -135,18 +136,21 @@ if (params.get('k') !== SECRET) {
   init();
 }
 
-const API_KEY = `?k=${SECRET}`;
-
 async function fetchEntries() {
   const res = await fetch('/api/entries' + API_KEY);
   return await res.json();
 }
 
 async function init() {
-  entries = await fetchEntries();
-  loaded = true;
-  render();
-  setInterval(render, 1000);
+  try {
+    entries = await fetchEntries();
+    loaded = true;
+    render();
+    setInterval(render, 1000);
+  } catch(e) {
+    document.getElementById('app').innerHTML =
+      '<div class="loading" style="color:#e74c3c">Error: ' + e.message + '</div>';
+  }
 }
 
 async function logEntry() {
