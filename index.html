@@ -129,12 +129,12 @@ const INTERVAL_MS = parseInterval(params.get('interval') || '3.5d');
 const CARD_COLOR = params.get('color') || 'orange';
 
 const COLORS = {
-  orange: { grad: 'linear-gradient(135deg, #c2410c, #ea580c, #fb923c)', shadow: 'rgba(234, 88, 12, 0.3)' },
-  blue:   { grad: 'linear-gradient(135deg, #1d4ed8, #3b82f6, #60a5fa)', shadow: 'rgba(59, 130, 246, 0.3)' },
-  red:    { grad: 'linear-gradient(135deg, #b91c1c, #dc2626, #ef4444)', shadow: 'rgba(220, 38, 38, 0.3)' },
-  purple: { grad: 'linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa)', shadow: 'rgba(139, 92, 246, 0.3)' },
-  teal:   { grad: 'linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf)', shadow: 'rgba(20, 184, 166, 0.3)' },
-  pink:   { grad: 'linear-gradient(135deg, #be185d, #ec4899, #f472b6)', shadow: 'rgba(236, 72, 153, 0.3)' },
+  orange: { grad: 'linear-gradient(135deg, #c2410c, #ea580c, #fb923c)', shadow: 'rgba(234, 88, 12, 0.3)', btn: '#ea580c', btnShadow: 'rgba(234, 88, 12, 0.4)' },
+  blue:   { grad: 'linear-gradient(135deg, #1d4ed8, #3b82f6, #60a5fa)', shadow: 'rgba(59, 130, 246, 0.3)', btn: '#3b82f6', btnShadow: 'rgba(59, 130, 246, 0.4)' },
+  red:    { grad: 'linear-gradient(135deg, #b91c1c, #dc2626, #ef4444)', shadow: 'rgba(220, 38, 38, 0.3)', btn: '#dc2626', btnShadow: 'rgba(220, 38, 38, 0.4)' },
+  purple: { grad: 'linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa)', shadow: 'rgba(139, 92, 246, 0.3)', btn: '#8b5cf6', btnShadow: 'rgba(139, 92, 246, 0.4)' },
+  teal:   { grad: 'linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf)', shadow: 'rgba(20, 184, 166, 0.3)', btn: '#14b8a6', btnShadow: 'rgba(20, 184, 166, 0.4)' },
+  pink:   { grad: 'linear-gradient(135deg, #be185d, #ec4899, #f472b6)', shadow: 'rgba(236, 72, 153, 0.3)', btn: '#ec4899', btnShadow: 'rgba(236, 72, 153, 0.4)' },
 };
 const CC = COLORS[CARD_COLOR] || COLORS.orange;
 
@@ -285,7 +285,7 @@ function renderFull() {
         <h2>${TRACKER_NAME} Tracker</h2>
         <p>Every ${fmtInterval()}.<br>Tap below when you take one.</p>
       </div>
-      <button class="btn green-btn" onclick="logEntry()">I took a ${TRACKER_NAME}</button>`;
+      <button class="btn green-btn" style="background:${CC.btn};box-shadow:0 4px 20px ${CC.btnShadow}" onclick="logEntry()">I took a ${TRACKER_NAME}</button>`;
   } else {
     const elapsed = Date.now() - last.ts;
     if (elapsed >= INTERVAL_MS) {
@@ -294,7 +294,7 @@ function renderFull() {
           <div class="status-label">Ready</div>
           <div id="timer">${fmt(elapsed)} elapsed</div>
         </div>
-        <button class="btn green-btn" onclick="logEntry()">I took a ${TRACKER_NAME}</button>`;
+        <button class="btn green-btn" style="background:${CC.btn};box-shadow:0 4px 20px ${CC.btnShadow}" onclick="logEntry()">I took a ${TRACKER_NAME}</button>`;
     } else {
       html += `
         <div class="status-card wait" style="background:${CC.grad};box-shadow:0 8px 30px ${CC.shadow}">
