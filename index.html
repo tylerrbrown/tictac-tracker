@@ -70,6 +70,7 @@
       color: #000;
     }
     .btn.green-btn:hover { background: #27ae36; transform: scale(1.02); }
+    .btn.green-btn:active { transform: scale(0.98); }
     .btn.red-btn {
       background: #555;
       color: #999;
@@ -118,8 +119,6 @@
 
 <script>
 const SECRET = 'x9f2k7m4-b8c1-e3a5-d6w0-q7r9s2t4u1v8';
-const BLOB_ID = '019cf810-553f-765f-bb1a-aa717a916880';
-const BLOB_URL = `https://jsonblob.com/api/jsonBlob/${BLOB_ID}`;
 const INTERVAL_MS = 3.5 * 24 * 60 * 60 * 1000; // 3.5 days in ms
 
 let entries = [];
@@ -137,17 +136,8 @@ if (params.get('k') !== SECRET) {
 }
 
 async function fetchEntries() {
-  const res = await fetch(BLOB_URL);
-  const data = await res.json();
-  return data.entries || [];
-}
-
-async function saveEntries(data) {
-  await fetch(BLOB_URL, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ entries: data })
-  });
+  const res = await fetch('/api/entries');
+  return await res.json();
 }
 
 async function init() {
@@ -158,15 +148,16 @@ async function init() {
 }
 
 async function logEntry() {
-  entries.push(Date.now());
+  const res = await fetch('/api/entries', { method: 'POST' });
+  const entry = await res.json();
+  entries.push(entry);
   render();
-  await saveEntries(entries);
 }
 
-async function deleteEntry(index) {
+async function deleteEntry(id, index) {
+  await fetch('/api/entries/' + id, { method: 'DELETE' });
   entries.splice(index, 1);
   render();
-  await saveEntries(entries);
 }
 
 function formatDuration(ms) {
@@ -216,7 +207,7 @@ function render() {
       <button class="btn green-btn" onclick="logEntry()">I just took a Tic Tac</button>
     `;
   } else {
-    const elapsed = Date.now() - last;
+    const elapsed = Date.now() - last.ts;
     const isReady = elapsed >= INTERVAL_MS;
 
     if (isReady) {
@@ -225,7 +216,7 @@ function render() {
           <div class="status-icon">✅</div>
           <div class="status-label">Ready — Time for your Tic Tac!</div>
           <div class="status-detail">It's been ${formatDuration(elapsed)} since your last one.</div>
-          <div class="since">Last taken: ${formatDate(last)}</div>
+          <div class="since">Last taken: ${formatDate(last.ts)}</div>
         </div>
         <button class="btn green-btn" onclick="logEntry()">I just took a Tic Tac</button>
       `;
@@ -238,7 +229,7 @@ function render() {
           <div class="status-detail">Wait a bit longer before your next Tic Tac.</div>
           <div class="countdown">${formatDuration(remaining)}</div>
           <div class="status-detail" style="margin-top:0.5rem">remaining</div>
-          <div class="since">Last taken: ${formatDate(last)}</div>
+          <div class="since">Last taken: ${formatDate(last.ts)}</div>
         </div>
         <button class="btn red-btn" disabled>Not time yet</button>
       `;
@@ -253,10 +244,10 @@ function render() {
     for (let i = entries.length - 1; i >= 0; i--) {
       html += `
         <div class="log-entry">
-          <span class="log-date">${formatDate(entries[i])}</span>
+          <span class="log-date">${formatDate(entries[i].ts)}</span>
           <span>
-            <span class="log-ago">${timeAgo(entries[i])}</span>
-            <button class="delete-btn" onclick="deleteEntry(${i})" title="Delete">✕</button>
+            <span class="log-ago">${timeAgo(entries[i].ts)}</span>
+            <button class="delete-btn" onclick="deleteEntry(${entries[i].id}, ${i})" title="Delete">✕</button>
           </span>
         </div>
       `;
