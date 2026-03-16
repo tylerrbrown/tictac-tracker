@@ -5,7 +5,7 @@ import json
 import os
 import sqlite3
 import time
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -104,12 +104,18 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(404)
         self.end_headers()
 
+    def handle_one_request(self):
+        try:
+            super().handle_one_request()
+        except (ConnectionResetError, BrokenPipeError):
+            self.close_connection = True
+
     def log_message(self, format, *args):
         pass  # silence request logs
 
 
 if __name__ == "__main__":
     get_db()  # ensure table exists
-    server = HTTPServer(("127.0.0.1", 5050), Handler)
+    server = ThreadingHTTPServer(("127.0.0.1", 5050), Handler)
     print("Tic Tac Tracker running on http://127.0.0.1:5050")
     server.serve_forever()
