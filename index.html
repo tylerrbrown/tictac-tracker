@@ -3,113 +3,135 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Tracker</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0f0f0f;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
       color: #e0e0e0;
       min-height: 100vh;
       display: flex;
       justify-content: center;
       padding: 2rem 1rem;
+      -webkit-font-smoothing: antialiased;
     }
     #denied {
       display: flex; align-items: center; justify-content: center;
-      height: 80vh; font-size: 2rem; color: #333;
+      height: 80vh; font-size: 2rem; color: #222;
     }
-    #app { display: none; max-width: 480px; width: 100%; }
-    .loading { text-align: center; padding: 3rem; color: #666; }
+    #app { display: none; max-width: 420px; width: 100%; }
+    .loading { text-align: center; padding: 3rem; color: #555; }
+
     .status-card {
-      border-radius: 20px;
-      padding: 2.5rem 2rem;
+      border-radius: 24px;
+      padding: 2.5rem 2rem 2rem;
       text-align: center;
       margin-bottom: 1.5rem;
-      transition: background 0.5s ease;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
     .status-card.green {
-      background: linear-gradient(135deg, #0a3d0a, #1a6b1a);
-      border: 2px solid #2ecc40;
+      background: rgba(46, 204, 64, 0.08);
+      border: 1px solid rgba(46, 204, 64, 0.25);
+      box-shadow: 0 0 60px rgba(46, 204, 64, 0.08), inset 0 1px 0 rgba(255,255,255,0.05);
     }
     .status-card.red {
-      background: linear-gradient(135deg, #3d0a0a, #6b1a1a);
-      border: 2px solid #e74c3c;
+      background: rgba(231, 76, 60, 0.08);
+      border: 1px solid rgba(231, 76, 60, 0.25);
+      box-shadow: 0 0 60px rgba(231, 76, 60, 0.08), inset 0 1px 0 rgba(255,255,255,0.05);
     }
-    .status-icon { font-size: 3.5rem; margin-bottom: 0.75rem; }
+
     .status-label {
-      font-size: 1.3rem; font-weight: 600;
-      margin-bottom: 0.5rem; letter-spacing: 0.5px;
+      font-size: 0.75rem; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 3px;
+      margin-bottom: 1.25rem;
     }
-    .status-detail {
-      font-size: 1rem; opacity: 0.85;
-      line-height: 1.5;
-    }
+    .status-card.green .status-label { color: #2ecc40; }
+    .status-card.red .status-label { color: #e74c3c; }
+
     .countdown {
-      font-size: 2rem; font-weight: 700;
+      font-size: 2.8rem; font-weight: 200;
       font-variant-numeric: tabular-nums;
-      margin-top: 0.75rem; letter-spacing: 1px;
+      letter-spacing: 2px;
+      line-height: 1;
     }
-    .since {
-      font-size: 0.9rem; opacity: 0.6;
+    .countdown-sub {
+      font-size: 0.7rem; color: #555;
+      text-transform: uppercase; letter-spacing: 4px;
       margin-top: 0.75rem;
     }
+    .elapsed {
+      font-size: 1.8rem; font-weight: 200;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 1px;
+    }
+
     .btn {
       width: 100%;
-      padding: 1.1rem;
-      font-size: 1.15rem;
+      padding: 1rem;
+      font-size: 1rem;
       font-weight: 600;
       border: none;
-      border-radius: 14px;
+      border-radius: 16px;
       cursor: pointer;
-      transition: all 0.2s ease;
-      margin-bottom: 2rem;
+      transition: all 0.15s ease;
+      margin-bottom: 2.5rem;
+      letter-spacing: 0.5px;
     }
     .btn.green-btn {
       background: #2ecc40;
       color: #000;
+      box-shadow: 0 4px 20px rgba(46, 204, 64, 0.3);
     }
-    .btn.green-btn:hover { background: #27ae36; transform: scale(1.02); }
-    .btn.green-btn:active { transform: scale(0.98); }
+    .btn.green-btn:hover { box-shadow: 0 4px 30px rgba(46, 204, 64, 0.5); }
+    .btn.green-btn:active { transform: scale(0.97); }
     .btn.red-btn {
-      background: #555;
-      color: #999;
+      background: rgba(255,255,255,0.06);
+      color: #555;
       cursor: not-allowed;
+      box-shadow: none;
     }
+
     .log-section h2 {
-      font-size: 0.85rem;
+      font-size: 0.65rem;
       text-transform: uppercase;
-      letter-spacing: 2px;
-      color: #666;
+      letter-spacing: 3px;
+      color: #444;
       margin-bottom: 1rem;
-      border-bottom: 1px solid #222;
-      padding-bottom: 0.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
     }
     .log-entry {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid #1a1a1a;
-      font-size: 0.9rem;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      font-size: 0.85rem;
     }
-    .log-entry .log-date { color: #aaa; }
-    .log-entry .log-ago { color: #666; font-size: 0.8rem; }
+    .log-entry .log-date { color: #888; }
+    .log-entry .log-ago { color: #444; font-size: 0.75rem; }
     .log-entry:last-child { border-bottom: none; }
-    .empty-log { color: #444; font-style: italic; padding: 1rem 0; }
+    .empty-log { color: #333; font-style: italic; padding: 1rem 0; font-size: 0.85rem; }
     .delete-btn {
-      background: none; border: none; color: #555;
-      cursor: pointer; font-size: 0.8rem; padding: 0.25rem 0.5rem;
-      border-radius: 4px; margin-left: 0.5rem;
+      background: none; border: none; color: #333;
+      cursor: pointer; font-size: 0.75rem; padding: 0.25rem 0.5rem;
+      border-radius: 6px; margin-left: 0.5rem;
+      transition: all 0.15s ease;
     }
-    .delete-btn:hover { color: #e74c3c; background: #1a1a1a; }
+    .delete-btn:hover { color: #e74c3c; background: rgba(231,76,60,0.1); }
+
     .first-time {
       text-align: center; padding: 3rem 2rem;
-      background: #1a1a1a; border-radius: 20px;
-      margin-bottom: 1.5rem; border: 2px solid #333;
+      background: rgba(255,255,255,0.03); border-radius: 24px;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.06);
     }
-    .first-time h2 { margin-bottom: 1rem; font-size: 1.3rem; }
-    .first-time p { color: #888; margin-bottom: 1.5rem; }
+    .first-time h2 { margin-bottom: 1rem; font-size: 1.2rem; font-weight: 500; }
+    .first-time p { color: #666; margin-bottom: 1.5rem; font-size: 0.9rem; }
   </style>
 </head>
 <body>
@@ -119,13 +141,12 @@
 
 <script>
 const SECRET = 'x9f2k7m4-b8c1-e3a5-d6w0-q7r9s2t4u1v8';
-const INTERVAL_MS = 3.5 * 24 * 60 * 60 * 1000; // 3.5 days in ms
+const INTERVAL_MS = 3.5 * 24 * 60 * 60 * 1000;
 
 let entries = [];
 let loaded = false;
 const API_KEY = `?k=${SECRET}`;
 
-// --- Access check ---
 const params = new URLSearchParams(window.location.search);
 if (params.get('k') !== SECRET) {
   document.getElementById('denied').style.display = 'flex';
@@ -207,11 +228,11 @@ function render() {
   if (last === null) {
     html += `
       <div class="first-time">
-        <div style="font-size:3rem;margin-bottom:1rem">💊</div>
+        <div style="font-size:2.5rem;margin-bottom:1rem">💊</div>
         <h2>Tic Tac Tracker</h2>
         <p>Track your twice-weekly schedule.<br>Tap the button when you take one.</p>
       </div>
-      <button class="btn green-btn" onclick="logEntry()">I just took a Tic Tac</button>
+      <button class="btn green-btn" onclick="logEntry()">I took a Tic Tac</button>
     `;
   } else {
     const elapsed = Date.now() - last.ts;
@@ -220,30 +241,24 @@ function render() {
     if (isReady) {
       html += `
         <div class="status-card green">
-          <div class="status-icon">✅</div>
-          <div class="status-label">Ready — Time for your Tic Tac!</div>
-          <div class="status-detail">It's been ${formatDuration(elapsed)} since your last one.</div>
-          <div class="since">Last taken: ${formatDate(last.ts)}</div>
+          <div class="status-label">Ready</div>
+          <div class="elapsed">${formatDuration(elapsed)}</div>
+          <div class="countdown-sub">since last dose</div>
         </div>
-        <button class="btn green-btn" onclick="logEntry()">I just took a Tic Tac</button>
+        <button class="btn green-btn" onclick="logEntry()">I took a Tic Tac</button>
       `;
     } else {
       const remaining = INTERVAL_MS - elapsed;
       html += `
         <div class="status-card red">
-          <div class="status-icon">⏳</div>
-          <div class="status-label">Not Yet</div>
-          <div class="status-detail">Wait a bit longer before your next Tic Tac.</div>
+          <div class="status-label">Next dose in</div>
           <div class="countdown">${formatDuration(remaining)}</div>
-          <div class="status-detail" style="margin-top:0.5rem">remaining</div>
-          <div class="since">Last taken: ${formatDate(last.ts)}</div>
         </div>
-        <button class="btn red-btn" disabled>Not time yet</button>
+        <button class="btn red-btn" disabled>Not yet</button>
       `;
     }
   }
 
-  // Log section
   html += '<div class="log-section"><h2>History</h2>';
   if (entries.length === 0) {
     html += '<div class="empty-log">No entries yet.</div>';
