@@ -17,14 +17,77 @@
       justify-content: center;
       padding: 1.5rem 1rem;
     }
-    #denied {
-      display: flex; align-items: center; justify-content: center;
-      height: 80vh; font-size: 2rem; color: #2a2a2a;
-    }
-    #app { display: none; max-width: 440px; width: 100%; }
+    #app { max-width: 440px; width: 100%; }
     .loading { text-align: center; padding: 3rem; color: #475569; font-size: 1.1rem; }
     .error { text-align: center; padding: 3rem; color: #f43f5e; font-size: 1.1rem; }
 
+    /* ── Landing page ── */
+    .landing-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .landing-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #e5e5e5;
+      margin-bottom: 0.25rem;
+    }
+    .landing-header p {
+      color: #6b6b6b;
+      font-size: 0.95rem;
+    }
+    .tracker-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .tracker-card {
+      background: #2a2a2a;
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      cursor: pointer;
+      transition: transform 0.1s;
+      text-decoration: none;
+      display: block;
+    }
+    .tracker-card:active { transform: scale(0.98); }
+    .tracker-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .tracker-card-name {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #e5e5e5;
+    }
+    .tracker-card-color {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .tracker-card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.88rem;
+      color: #6b6b6b;
+    }
+    .tracker-card-status {
+      font-weight: 600;
+      font-size: 0.88rem;
+    }
+    .tracker-card-status.ready { color: #10b981; }
+    .tracker-card-status.waiting { color: #f59e0b; }
+    .tracker-card-status.no-entries { color: #6b6b6b; }
+    .landing-empty {
+      text-align: center;
+      padding: 3rem;
+      color: #6b6b6b;
+    }
+
+    /* ── Tracker page ── */
     .status-card {
       border-radius: 20px;
       padding: 2.25rem 1.5rem;
@@ -34,9 +97,6 @@
     .status-card.green {
       background: linear-gradient(135deg, #059669, #10b981, #34d399);
       box-shadow: 0 8px 30px rgba(16, 185, 129, 0.3);
-    }
-    .status-card.wait {
-      /* colors set dynamically via inline style */
     }
     .status-label {
       font-size: 1.2rem; font-weight: 600;
@@ -49,7 +109,6 @@
       font-variant-numeric: tabular-nums;
       color: #fff;
     }
-
     .btn {
       width: 100%;
       padding: 1.3rem;
@@ -71,7 +130,6 @@
       color: #6b6b6b;
       cursor: not-allowed;
     }
-
     .log-section {
       background: #2a2a2a;
       border-radius: 16px;
@@ -112,44 +170,45 @@
     }
     .first-time h2 { margin-bottom: 0.75rem; font-size: 1.56rem; font-weight: 600; color: #d4d4d4; }
     .first-time p { color: #a3a3a3; margin-bottom: 1rem; font-size: 1.2rem; }
+    .back-link {
+      display: inline-block;
+      color: #6b6b6b;
+      text-decoration: none;
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+    }
+    .back-link:hover { color: #a3a3a3; }
   </style>
 </head>
 <body>
 
-<div id="denied"><span>404</span></div>
-<div id="app"></div>
+<div id="app"><div class="loading">Loading...</div></div>
 
 <script>
-const SECRET = 'x9f2k7m4-b8c1-e3a5-d6w0-q7r9s2t4u1v8';
 const params = new URLSearchParams(window.location.search);
-
-// Parse tracker name and interval from URL
-const TRACKER_NAME = params.get('name') || 'Tic Tac';
-const INTERVAL_MS = parseInterval(params.get('interval') || '3.5d');
-const CARD_COLOR = params.get('color') || 'orange';
+const trackerSlug = params.get('name');
 
 const COLORS = {
-  red:     { grad: 'linear-gradient(135deg, #b91c1c, #dc2626, #ef4444)', shadow: 'rgba(220, 38, 38, 0.3)', btn: '#dc2626', btnShadow: 'rgba(220, 38, 38, 0.4)' },
-  orange:  { grad: 'linear-gradient(135deg, #c2410c, #ea580c, #fb923c)', shadow: 'rgba(234, 88, 12, 0.3)', btn: '#ea580c', btnShadow: 'rgba(234, 88, 12, 0.4)' },
-  yellow:  { grad: 'linear-gradient(135deg, #a16207, #ca8a04, #facc15)', shadow: 'rgba(202, 138, 4, 0.3)', btn: '#ca8a04', btnShadow: 'rgba(202, 138, 4, 0.4)' },
-  lime:    { grad: 'linear-gradient(135deg, #4d7c0f, #65a30d, #a3e635)', shadow: 'rgba(101, 163, 13, 0.3)', btn: '#65a30d', btnShadow: 'rgba(101, 163, 13, 0.4)' },
-  green:   { grad: 'linear-gradient(135deg, #15803d, #22c55e, #4ade80)', shadow: 'rgba(34, 197, 94, 0.3)', btn: '#22c55e', btnShadow: 'rgba(34, 197, 94, 0.4)' },
-  teal:    { grad: 'linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf)', shadow: 'rgba(20, 184, 166, 0.3)', btn: '#14b8a6', btnShadow: 'rgba(20, 184, 166, 0.4)' },
-  cyan:    { grad: 'linear-gradient(135deg, #0e7490, #06b6d4, #22d3ee)', shadow: 'rgba(6, 182, 212, 0.3)', btn: '#06b6d4', btnShadow: 'rgba(6, 182, 212, 0.4)' },
-  blue:    { grad: 'linear-gradient(135deg, #1d4ed8, #3b82f6, #60a5fa)', shadow: 'rgba(59, 130, 246, 0.3)', btn: '#3b82f6', btnShadow: 'rgba(59, 130, 246, 0.4)' },
-  indigo:  { grad: 'linear-gradient(135deg, #4338ca, #6366f1, #818cf8)', shadow: 'rgba(99, 102, 241, 0.3)', btn: '#6366f1', btnShadow: 'rgba(99, 102, 241, 0.4)' },
-  purple:  { grad: 'linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa)', shadow: 'rgba(139, 92, 246, 0.3)', btn: '#8b5cf6', btnShadow: 'rgba(139, 92, 246, 0.4)' },
-  pink:    { grad: 'linear-gradient(135deg, #be185d, #ec4899, #f472b6)', shadow: 'rgba(236, 72, 153, 0.3)', btn: '#ec4899', btnShadow: 'rgba(236, 72, 153, 0.4)' },
-  rose:    { grad: 'linear-gradient(135deg, #be123c, #f43f5e, #fb7185)', shadow: 'rgba(244, 63, 94, 0.3)', btn: '#f43f5e', btnShadow: 'rgba(244, 63, 94, 0.4)' },
-  gray:    { grad: 'linear-gradient(135deg, #374151, #6b7280, #9ca3af)', shadow: 'rgba(107, 114, 128, 0.3)', btn: '#6b7280', btnShadow: 'rgba(107, 114, 128, 0.4)' },
-  brown:   { grad: 'linear-gradient(135deg, #78350f, #92400e, #b45309)', shadow: 'rgba(146, 64, 14, 0.3)', btn: '#92400e', btnShadow: 'rgba(146, 64, 14, 0.4)' },
-  gold:    { grad: 'linear-gradient(135deg, #92400e, #d97706, #fbbf24)', shadow: 'rgba(217, 119, 6, 0.3)', btn: '#d97706', btnShadow: 'rgba(217, 119, 6, 0.4)' },
+  red:     { grad: 'linear-gradient(135deg, #b91c1c, #dc2626, #ef4444)', shadow: 'rgba(220, 38, 38, 0.3)', btn: '#dc2626', btnShadow: 'rgba(220, 38, 38, 0.4)', dot: '#dc2626' },
+  orange:  { grad: 'linear-gradient(135deg, #c2410c, #ea580c, #fb923c)', shadow: 'rgba(234, 88, 12, 0.3)', btn: '#ea580c', btnShadow: 'rgba(234, 88, 12, 0.4)', dot: '#ea580c' },
+  yellow:  { grad: 'linear-gradient(135deg, #a16207, #ca8a04, #facc15)', shadow: 'rgba(202, 138, 4, 0.3)', btn: '#ca8a04', btnShadow: 'rgba(202, 138, 4, 0.4)', dot: '#ca8a04' },
+  lime:    { grad: 'linear-gradient(135deg, #4d7c0f, #65a30d, #a3e635)', shadow: 'rgba(101, 163, 13, 0.3)', btn: '#65a30d', btnShadow: 'rgba(101, 163, 13, 0.4)', dot: '#65a30d' },
+  green:   { grad: 'linear-gradient(135deg, #15803d, #22c55e, #4ade80)', shadow: 'rgba(34, 197, 94, 0.3)', btn: '#22c55e', btnShadow: 'rgba(34, 197, 94, 0.4)', dot: '#22c55e' },
+  teal:    { grad: 'linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf)', shadow: 'rgba(20, 184, 166, 0.3)', btn: '#14b8a6', btnShadow: 'rgba(20, 184, 166, 0.4)', dot: '#14b8a6' },
+  cyan:    { grad: 'linear-gradient(135deg, #0e7490, #06b6d4, #22d3ee)', shadow: 'rgba(6, 182, 212, 0.3)', btn: '#06b6d4', btnShadow: 'rgba(6, 182, 212, 0.4)', dot: '#06b6d4' },
+  blue:    { grad: 'linear-gradient(135deg, #1d4ed8, #3b82f6, #60a5fa)', shadow: 'rgba(59, 130, 246, 0.3)', btn: '#3b82f6', btnShadow: 'rgba(59, 130, 246, 0.4)', dot: '#3b82f6' },
+  indigo:  { grad: 'linear-gradient(135deg, #4338ca, #6366f1, #818cf8)', shadow: 'rgba(99, 102, 241, 0.3)', btn: '#6366f1', btnShadow: 'rgba(99, 102, 241, 0.4)', dot: '#6366f1' },
+  purple:  { grad: 'linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa)', shadow: 'rgba(139, 92, 246, 0.3)', btn: '#8b5cf6', btnShadow: 'rgba(139, 92, 246, 0.4)', dot: '#8b5cf6' },
+  pink:    { grad: 'linear-gradient(135deg, #be185d, #ec4899, #f472b6)', shadow: 'rgba(236, 72, 153, 0.3)', btn: '#ec4899', btnShadow: 'rgba(236, 72, 153, 0.4)', dot: '#ec4899' },
+  rose:    { grad: 'linear-gradient(135deg, #be123c, #f43f5e, #fb7185)', shadow: 'rgba(244, 63, 94, 0.3)', btn: '#f43f5e', btnShadow: 'rgba(244, 63, 94, 0.4)', dot: '#f43f5e' },
+  gray:    { grad: 'linear-gradient(135deg, #374151, #6b7280, #9ca3af)', shadow: 'rgba(107, 114, 128, 0.3)', btn: '#6b7280', btnShadow: 'rgba(107, 114, 128, 0.4)', dot: '#6b7280' },
+  brown:   { grad: 'linear-gradient(135deg, #78350f, #92400e, #b45309)', shadow: 'rgba(146, 64, 14, 0.3)', btn: '#92400e', btnShadow: 'rgba(146, 64, 14, 0.4)', dot: '#92400e' },
+  gold:    { grad: 'linear-gradient(135deg, #92400e, #d97706, #fbbf24)', shadow: 'rgba(217, 119, 6, 0.3)', btn: '#d97706', btnShadow: 'rgba(217, 119, 6, 0.4)', dot: '#d97706' },
 };
-const CC = COLORS[CARD_COLOR] || COLORS.orange;
 
 function parseInterval(str) {
   const m = str.match(/^([\d.]+)\s*(d|h|m|w)$/i);
-  if (!m) return 3.5 * 24 * 60 * 60 * 1000; // default 3.5 days
+  if (!m) return 3.5 * 24 * 60 * 60 * 1000;
   const val = parseFloat(m[1]);
   switch (m[2].toLowerCase()) {
     case 'w': return val * 7 * 24 * 60 * 60 * 1000;
@@ -160,74 +219,15 @@ function parseInterval(str) {
   }
 }
 
-function fmtInterval() {
-  const days = INTERVAL_MS / (24 * 60 * 60 * 1000);
+function fmtIntervalStr(str) {
+  const ms = parseInterval(str);
+  const days = ms / (24 * 60 * 60 * 1000);
   if (days >= 7 && days % 7 === 0) return (days / 7) + (days / 7 === 1 ? ' week' : ' weeks');
   if (days >= 1) return days + (days === 1 ? ' day' : ' days');
-  const hours = INTERVAL_MS / (60 * 60 * 1000);
+  const hours = ms / (60 * 60 * 1000);
   if (hours >= 1) return hours + (hours === 1 ? ' hour' : ' hours');
-  const mins = INTERVAL_MS / (60 * 1000);
+  const mins = ms / (60 * 1000);
   return mins + (mins === 1 ? ' minute' : ' minutes');
-}
-
-let entries = [];
-const nameParam = params.get('name') ? `&name=${encodeURIComponent(params.get('name'))}` : '';
-const API_PARAMS = `?k=${SECRET}${nameParam}`;
-
-document.title = TRACKER_NAME + ' Tracker';
-
-if (params.get('k') !== SECRET) {
-  document.getElementById('denied').style.display = 'flex';
-} else {
-  document.getElementById('denied').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  document.getElementById('app').innerHTML = '<div class="loading">Loading...</div>';
-  init();
-}
-
-async function init() {
-  try {
-    const res = await fetch('/api/entries' + API_PARAMS);
-    if (!res.ok) throw new Error('Server error ' + res.status);
-    entries = await res.json();
-    renderFull();
-    setInterval(tickTimer, 1000);
-  } catch(e) {
-    document.getElementById('app').innerHTML =
-      '<div class="error">Failed to load: ' + e.message + '</div>';
-  }
-}
-
-let saving = false;
-
-async function logEntry() {
-  if (saving) return;
-  saving = true;
-  const btn = document.querySelector('.green-btn');
-  if (btn) { btn.textContent = 'Saving...'; btn.style.opacity = '0.6'; }
-  try {
-    const res = await fetch('/api/entries' + API_PARAMS, { method: 'POST' });
-    if (!res.ok) throw new Error('Failed');
-    const entry = await res.json();
-    entries.push(entry);
-    renderFull();
-  } catch(e) {
-    if (btn) { btn.textContent = 'Failed — tap to retry'; btn.style.opacity = '1'; }
-  }
-  saving = false;
-}
-
-async function deleteEntry(id, index) {
-  const original = [...entries];
-  entries.splice(index, 1);
-  renderFull();
-  try {
-    const res = await fetch('/api/entries/' + id + API_PARAMS, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed');
-  } catch(e) {
-    entries = original;
-    renderFull();
-  }
 }
 
 function fmt(ms) {
@@ -261,7 +261,198 @@ function ago(ts) {
   return `${m}m ago`;
 }
 
-// Only updates the timer text — no DOM rebuild
+// ── SSE setup ──
+let evtSource = null;
+function setupSSE(onEvent) {
+  evtSource = new EventSource('/api/events');
+  evtSource.onopen = () => {};
+  evtSource.onerror = () => {};
+  evtSource.addEventListener('entry-added', onEvent);
+  evtSource.addEventListener('entry-deleted', onEvent);
+  evtSource.addEventListener('entry-updated', onEvent);
+  evtSource.addEventListener('entries-cleared', onEvent);
+  evtSource.addEventListener('tracker-created', onEvent);
+  evtSource.addEventListener('tracker-updated', onEvent);
+  evtSource.addEventListener('tracker-deleted', onEvent);
+  evtSource.addEventListener('db-restored', onEvent);
+}
+
+// ── Decide mode ──
+if (trackerSlug) {
+  initTrackerPage(trackerSlug);
+} else {
+  initLandingPage();
+}
+
+// ═══════════════════════════════════════════════════════════
+// LANDING PAGE
+// ═══════════════════════════════════════════════════════════
+async function initLandingPage() {
+  document.title = 'Tic Tac Tracker';
+  try {
+    const res = await fetch('/api/trackers');
+    if (!res.ok) throw new Error('Server error ' + res.status);
+    let trackers = await res.json();
+    renderLanding(trackers);
+
+    // SSE: refresh on any change
+    setupSSE(async () => {
+      const r = await fetch('/api/trackers');
+      if (r.ok) {
+        trackers = await r.json();
+        renderLanding(trackers);
+      }
+    });
+
+    // Update ago times on landing
+    setInterval(() => {
+      document.querySelectorAll('[data-last-entry]').forEach(el => {
+        const ts = parseInt(el.dataset.lastEntry);
+        if (ts) el.textContent = ago(ts);
+      });
+    }, 1000);
+  } catch (e) {
+    document.getElementById('app').innerHTML =
+      '<div class="error">Failed to load: ' + e.message + '</div>';
+  }
+}
+
+function renderLanding(trackers) {
+  const app = document.getElementById('app');
+  let html = '<div class="landing-header"><h1>Tic Tac Tracker</h1><p>Your trackers</p></div>';
+
+  if (!trackers.length) {
+    html += '<div class="landing-empty">No trackers yet. Create one from the admin page.</div>';
+  } else {
+    html += '<div class="tracker-grid">';
+    for (const t of trackers) {
+      const cc = COLORS[t.color] || COLORS.orange;
+      const intervalMs = parseInterval(t.interval);
+      let statusHtml = '';
+      if (!t.last_entry) {
+        statusHtml = '<span class="tracker-card-status no-entries">No entries</span>';
+      } else {
+        const elapsed = Date.now() - t.last_entry;
+        if (elapsed >= intervalMs) {
+          statusHtml = '<span class="tracker-card-status ready">Ready</span>';
+        } else {
+          statusHtml = `<span class="tracker-card-status waiting">${fmt(intervalMs - elapsed)}</span>`;
+        }
+      }
+      html += `
+        <a class="tracker-card" href="/?name=${encodeURIComponent(t.slug)}">
+          <div class="tracker-card-top">
+            <span class="tracker-card-name">${esc(t.display_name)}</span>
+            <span class="tracker-card-color" style="background:${cc.dot}"></span>
+          </div>
+          <div class="tracker-card-meta">
+            <span>Every ${fmtIntervalStr(t.interval)} &middot; ${t.entry_count} entries</span>
+            ${statusHtml}
+          </div>
+        </a>`;
+    }
+    html += '</div>';
+  }
+  app.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TRACKER PAGE
+// ═══════════════════════════════════════════════════════════
+let trackerConfig = null;
+let entries = [];
+let INTERVAL_MS = 0;
+let CC = COLORS.orange;
+let saving = false;
+
+async function initTrackerPage(slug) {
+  const app = document.getElementById('app');
+  try {
+    // Load tracker config
+    const cfgRes = await fetch(`/api/tracker/${encodeURIComponent(slug)}`);
+    if (!cfgRes.ok) {
+      if (cfgRes.status === 404) {
+        app.innerHTML = '<div class="error">Tracker not found.</div>';
+        return;
+      }
+      throw new Error('Server error ' + cfgRes.status);
+    }
+    trackerConfig = await cfgRes.json();
+    INTERVAL_MS = parseInterval(trackerConfig.interval);
+    CC = COLORS[trackerConfig.color] || COLORS.orange;
+    document.title = trackerConfig.display_name + ' Tracker';
+
+    // Load entries
+    const res = await fetch(`/api/entries?name=${encodeURIComponent(slug)}`);
+    if (!res.ok) throw new Error('Server error ' + res.status);
+    entries = await res.json();
+    renderTracker();
+    setInterval(tickTimer, 1000);
+
+    // SSE: refresh on relevant changes
+    setupSSE(async (evt) => {
+      const data = JSON.parse(evt.data);
+      if (evt.type === 'db-restored' ||
+          evt.type === 'tracker-updated' && (data.slug === slug || data.old_slug === slug)) {
+        // Reload everything — config may have changed
+        const cr = await fetch(`/api/tracker/${encodeURIComponent(data.slug || slug)}`);
+        if (cr.ok) {
+          trackerConfig = await cr.json();
+          INTERVAL_MS = parseInterval(trackerConfig.interval);
+          CC = COLORS[trackerConfig.color] || COLORS.orange;
+          document.title = trackerConfig.display_name + ' Tracker';
+          // If slug changed, update URL
+          if (data.slug && data.slug !== slug) {
+            window.history.replaceState(null, '', '/?name=' + encodeURIComponent(data.slug));
+          }
+        }
+        const er = await fetch(`/api/entries?name=${encodeURIComponent(data.slug || slug)}`);
+        if (er.ok) { entries = await er.json(); renderTracker(); }
+      } else if (data.tracker === slug || evt.type === 'db-restored') {
+        // Entry change for this tracker — reload entries
+        const er = await fetch(`/api/entries?name=${encodeURIComponent(slug)}`);
+        if (er.ok) { entries = await er.json(); renderTracker(); }
+      } else if (evt.type === 'tracker-deleted' && data.slug === slug) {
+        app.innerHTML = '<div class="error">This tracker was deleted.</div>';
+        if (evtSource) evtSource.close();
+      }
+    });
+  } catch (e) {
+    app.innerHTML = '<div class="error">Failed to load: ' + e.message + '</div>';
+  }
+}
+
+// Make logEntry and deleteEntry global for onclick
+window.logEntry = async function() {
+  if (saving) return;
+  saving = true;
+  const btn = document.querySelector('.green-btn');
+  if (btn) { btn.textContent = 'Saving...'; btn.style.opacity = '0.6'; }
+  try {
+    const res = await fetch(`/api/entries?name=${encodeURIComponent(trackerSlug)}`, { method: 'POST' });
+    if (!res.ok) throw new Error('Failed');
+    const entry = await res.json();
+    entries.push(entry);
+    renderTracker();
+  } catch(e) {
+    if (btn) { btn.textContent = 'Failed \u2014 tap to retry'; btn.style.opacity = '1'; }
+  }
+  saving = false;
+};
+
+window.deleteEntry = async function(id, index) {
+  const original = [...entries];
+  entries.splice(index, 1);
+  renderTracker();
+  try {
+    const res = await fetch(`/api/entries/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed');
+  } catch(e) {
+    entries = original;
+    renderTracker();
+  }
+};
+
 function tickTimer() {
   const el = document.getElementById('timer');
   if (!el || !entries.length) return;
@@ -269,32 +460,30 @@ function tickTimer() {
   const elapsed = Date.now() - last.ts;
   if (elapsed >= INTERVAL_MS) {
     el.textContent = fmt(elapsed) + ' elapsed';
-    // Switch card to green if it was red
     const card = el.closest('.status-card');
-    if (card && card.classList.contains('wait')) renderFull();
+    if (card && card.classList.contains('wait')) renderTracker();
   } else {
     el.textContent = fmt(INTERVAL_MS - elapsed);
   }
-  // Update ago times
   document.querySelectorAll('.log-ago').forEach((el, idx) => {
     const e = entries[entries.length - 1 - idx];
     if (e) el.textContent = ago(e.ts);
   });
 }
 
-// Full rebuild — only on data changes
-function renderFull() {
+function renderTracker() {
   const app = document.getElementById('app');
   const last = entries.length > 0 ? entries[entries.length - 1] : null;
-  let html = '';
+  const name = trackerConfig ? trackerConfig.display_name : trackerSlug;
+  let html = '<a class="back-link" href="/">&larr; All Trackers</a>';
 
   if (!last) {
     html += `
       <div class="first-time">
-        <h2>${TRACKER_NAME} Tracker</h2>
-        <p>Every ${fmtInterval()}.<br>Tap below when you take one.</p>
+        <h2>${esc(name)} Tracker</h2>
+        <p>Every ${fmtIntervalStr(trackerConfig ? trackerConfig.interval : '3.5d')}.<br>Tap below when you take one.</p>
       </div>
-      <button class="btn green-btn" style="background:${CC.btn};box-shadow:0 4px 20px ${CC.btnShadow}" onclick="logEntry()">I took a ${TRACKER_NAME}</button>`;
+      <button class="btn green-btn" style="background:${CC.btn};box-shadow:0 4px 20px ${CC.btnShadow}" onclick="logEntry()">I took a ${esc(name)}</button>`;
   } else {
     const elapsed = Date.now() - last.ts;
     if (elapsed >= INTERVAL_MS) {
@@ -303,11 +492,11 @@ function renderFull() {
           <div class="status-label">Ready</div>
           <div id="timer">${fmt(elapsed)} elapsed</div>
         </div>
-        <button class="btn green-btn" style="background:${CC.btn};box-shadow:0 4px 20px ${CC.btnShadow}" onclick="logEntry()">I took a ${TRACKER_NAME}</button>`;
+        <button class="btn green-btn" style="background:${CC.btn};box-shadow:0 4px 20px ${CC.btnShadow}" onclick="logEntry()">I took a ${esc(name)}</button>`;
     } else {
       html += `
         <div class="status-card wait" style="background:${CC.grad};box-shadow:0 8px 30px ${CC.shadow}">
-          <div class="status-label">Next ${TRACKER_NAME} in</div>
+          <div class="status-label">Next ${esc(name)} in</div>
           <div id="timer">${fmt(INTERVAL_MS - elapsed)}</div>
         </div>
         <button class="btn red-btn" disabled>Not yet</button>`;
@@ -325,13 +514,19 @@ function renderFull() {
           <span class="log-date">${fmtDate(e.ts)}</span>
           <span class="log-right">
             <span class="log-ago">${ago(e.ts)}</span>
-            <button class="delete-btn" onclick="deleteEntry(${e.id},${i})">✕</button>
+            <button class="delete-btn" onclick="deleteEntry(${e.id},${i})">&#10005;</button>
           </span>
         </div>`;
     }
   }
   html += '</div>';
   app.innerHTML = html;
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
 }
 </script>
 </body>

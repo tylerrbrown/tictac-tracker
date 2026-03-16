@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Admin — Tic Tac Tracker</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #d4d4d4;
+      min-height: 100vh;
+      padding: 1.5rem 1rem;
+      display: flex;
+      justify-content: center;
+    }
+    #app { max-width: 600px; width: 100%; }
+
+    /* ── Header ── */
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .admin-header h1 { font-size: 1.4rem; font-weight: 700; color: #e5e5e5; }
+    .admin-header a { color: #6b6b6b; text-decoration: none; font-size: 0.9rem; }
+    .admin-header a:hover { color: #a3a3a3; }
+
+    /* ── Dashboard stats ── */
+    .stats-bar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      flex: 1;
+      background: #2a2a2a;
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .stat-val { font-size: 1.8rem; font-weight: 700; color: #e5e5e5; }
+    .stat-label { font-size: 0.78rem; color: #6b6b6b; text-transform: uppercase; letter-spacing: 1px; margin-top: 0.25rem; }
+
+    /* ── Section titles ── */
+    .section-title {
+      font-size: 0.88rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #6b6b6b;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #3a3a3a;
+    }
+
+    /* ── Tracker list ── */
+    .tracker-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .tracker-item {
+      background: #2a2a2a;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .tracker-item:hover { background: #333; }
+    .tracker-item.active { background: #333; border: 1px solid #4a4a4a; }
+    .tracker-item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .tracker-item-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #e5e5e5;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .color-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .tracker-item-meta {
+      font-size: 0.82rem;
+      color: #6b6b6b;
+      margin-top: 0.35rem;
+    }
+    .tracker-item-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* ── Buttons ── */
+    .btn-sm {
+      padding: 0.4rem 0.75rem;
+      font-size: 0.82rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .btn-primary { background: #3b82f6; color: #fff; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-secondary { background: #3a3a3a; color: #d4d4d4; }
+    .btn-secondary:hover { background: #4a4a4a; }
+    .btn-success { background: #10b981; color: #fff; }
+    .btn-success:hover { background: #059669; }
+    .btn-full {
+      width: 100%;
+      padding: 0.9rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Forms ── */
+    .form-group {
+      margin-bottom: 0.75rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      color: #a3a3a3;
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      background: #1a1a1a;
+      border: 1px solid #3a3a3a;
+      border-radius: 8px;
+      color: #e5e5e5;
+      font-size: 0.95rem;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+    .form-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .form-row .form-group { flex: 1; }
+
+    /* ── Panels ── */
+    .panel {
+      background: #2a2a2a;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .panel-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #e5e5e5;
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── Entry table ── */
+    .entry-table { width: 100%; }
+    .entry-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #3a3a3a;
+      font-size: 0.95rem;
+    }
+    .entry-row:last-child { border-bottom: none; }
+    .entry-date { color: #a3a3a3; }
+    .entry-ago { color: #6b6b6b; font-size: 0.85rem; }
+    .entry-actions { display: flex; gap: 0.35rem; align-items: center; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    .modal {
+      background: #2a2a2a;
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-width: 400px;
+      width: 90%;
+    }
+    .modal h3 { font-size: 1.1rem; color: #e5e5e5; margin-bottom: 0.75rem; }
+    .modal p { color: #a3a3a3; margin-bottom: 1rem; font-size: 0.95rem; }
+    .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+
+    /* ── Tools section ── */
+    .tools-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .tool-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: #2a2a2a;
+      border: none;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      color: #d4d4d4;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+    }
+    .tool-btn:hover { background: #333; }
+    .tool-icon { font-size: 1.2rem; width: 1.5rem; text-align: center; }
+    .tool-label { font-weight: 500; }
+    .tool-desc { font-size: 0.8rem; color: #6b6b6b; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #10b981;
+      color: #fff;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      z-index: 200;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ── Color picker grid ── */
+    .color-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .color-swatch {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.15s;
+    }
+    .color-swatch.selected { border-color: #fff; }
+    .color-swatch:hover { border-color: #a3a3a3; }
+
+    .hidden { display: none; }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+      color: #6b6b6b;
+    }
+    .pagination button {
+      background: #3a3a3a;
+      border: none;
+      color: #d4d4d4;
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── Copy URL button ── */
+    .copy-url-btn {
+      background: none;
+      border: none;
+      color: #6b6b6b;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.5rem;
+    }
+    .copy-url-btn:hover { color: #a3a3a3; }
+  </style>
+</head>
+<body>
+
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const KEY = params.get('k') || '';
+const API = (path) => path + (path.includes('?') ? '&' : '?') + 'k=' + KEY;
+
+const COLORS_LIST = ['orange','red','yellow','lime','green','teal','cyan','blue','indigo','purple','pink','rose','gray','brown','gold'];
+const COLOR_HEX = {
+  red:'#dc2626', orange:'#ea580c', yellow:'#ca8a04', lime:'#65a30d',
+  green:'#22c55e', teal:'#14b8a6', cyan:'#06b6d4', blue:'#3b82f6',
+  indigo:'#6366f1', purple:'#8b5cf6', pink:'#ec4899', rose:'#f43f5e',
+  gray:'#6b7280', brown:'#92400e', gold:'#d97706'
+};
+
+let trackers = [];
+let selectedTracker = null;
+let selectedEntries = [];
+let entryPage = 0;
+const ENTRIES_PER_PAGE = 20;
+
+// ── Init ──
+init();
+
+async function init() {
+  try {
+    const res = await fetch(API('/api/trackers'));
+    if (res.status === 401) {
+      document.getElementById('app').innerHTML = '<div style="text-align:center;padding:3rem;color:#6b6b6b;font-size:1.5rem">401</div>';
+      return;
+    }
+    trackers = await res.json();
+    render();
+    setupSSE();
+  } catch(e) {
+    document.getElementById('app').innerHTML =
+      '<div style="text-align:center;padding:3rem;color:#f43f5e">Failed to load: ' + e.message + '</div>';
+  }
+}
+
+function setupSSE() {
+  const es = new EventSource('/api/events');
+  const refresh = async () => {
+    const r = await fetch(API('/api/trackers'));
+    if (r.ok) trackers = await r.json();
+    if (selectedTracker) {
+      // Check if selected tracker still exists
+      const found = trackers.find(t => t.slug === selectedTracker.slug);
+      if (!found) {
+        selectedTracker = null;
+        selectedEntries = [];
+      } else {
+        selectedTracker = found;
+        await loadEntries(selectedTracker.slug);
+      }
+    }
+    render();
+  };
+  for (const evt of ['entry-added','entry-deleted','entry-updated','entries-cleared',
+                      'tracker-created','tracker-updated','tracker-deleted','db-restored']) {
+    es.addEventListener(evt, refresh);
+  }
+}
+
+// ── Render ──
+function render() {
+  const app = document.getElementById('app');
+  const totalEntries = trackers.reduce((s, t) => s + t.entry_count, 0);
+
+  let html = `
+    <div class="admin-header">
+      <h1>Admin</h1>
+      <a href="/">&larr; Back to Trackers</a>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-card"><div class="stat-val">${trackers.length}</div><div class="stat-label">Trackers</div></div>
+      <div class="stat-card"><div class="stat-val">${totalEntries}</div><div class="stat-label">Total Entries</div></div>
+    </div>
+  `;
+
+  // Tracker list
+  html += '<div class="section-title">Trackers</div>';
+  html += '<div class="tracker-list">';
+  for (const t of trackers) {
+    const isActive = selectedTracker && selectedTracker.slug === t.slug;
+    html += `
+      <div class="tracker-item ${isActive ? 'active' : ''}" onclick="selectTracker('${esc(t.slug)}')">
+        <div class="tracker-item-top">
+          <span class="tracker-item-name">
+            <span class="color-dot" style="background:${COLOR_HEX[t.color] || COLOR_HEX.orange}"></span>
+            ${esc(t.display_name)}
+          </span>
+          <div class="tracker-item-actions" onclick="event.stopPropagation()">
+            <button class="copy-url-btn" onclick="copyURL('${esc(t.slug)}')" title="Copy URL">URL</button>
+            <button class="btn-sm btn-secondary" onclick="editTracker('${esc(t.slug)}')">Edit</button>
+            <button class="btn-sm btn-danger" onclick="confirmDeleteTracker('${esc(t.slug)}', '${esc(t.display_name)}')">Del</button>
+          </div>
+        </div>
+        <div class="tracker-item-meta">
+          Every ${fmtIntervalStr(t.interval)} &middot; ${t.entry_count} entries
+          ${t.last_entry ? ' &middot; Last: ' + ago(t.last_entry) : ''}
+        </div>
+      </div>`;
+  }
+  html += '</div>';
+
+  // Create new tracker button
+  html += '<button class="btn-full btn-primary" onclick="showCreateForm()">+ New Tracker</button>';
+
+  // Selected tracker entries
+  if (selectedTracker) {
+    html += renderEntryPanel();
+  }
+
+  // Tools
+  html += `
+    <div class="section-title" style="margin-top:1.5rem">Tools</div>
+    <div class="tools-grid">
+      <button class="tool-btn" onclick="exportData()">
+        <span class="tool-icon">&#8681;</span>
+        <div><div class="tool-label">Export Entries</div><div class="tool-desc">Download entries as CSV or JSON</div></div>
+      </button>
+      <button class="tool-btn" onclick="backupDB()">
+        <span class="tool-icon">&#128190;</span>
+        <div><div class="tool-label">Backup Database</div><div class="tool-desc">Download full SQLite file</div></div>
+      </button>
+      <button class="tool-btn" onclick="restoreDB()">
+        <span class="tool-icon">&#128194;</span>
+        <div><div class="tool-label">Restore Database</div><div class="tool-desc">Upload a backup file to replace current DB</div></div>
+      </button>
+    </div>
+  `;
+
+  app.innerHTML = html;
+}
+
+function renderEntryPanel() {
+  const t = selectedTracker;
+  let html = `<div class="panel"><div class="panel-title">${esc(t.display_name)} — Entries</div>`;
+
+  if (!selectedEntries.length) {
+    html += '<div style="color:#6b6b6b;font-style:italic;padding:0.5rem 0">No entries</div>';
+  } else {
+    const start = entryPage * ENTRIES_PER_PAGE;
+    const pageEntries = selectedEntries.slice(start, start + ENTRIES_PER_PAGE);
+    html += '<div class="entry-table">';
+    for (const e of pageEntries) {
+      html += `
+        <div class="entry-row">
+          <span class="entry-date">${fmtDate(e.ts)}</span>
+          <div class="entry-actions">
+            <span class="entry-ago">${ago(e.ts)}</span>
+            <button class="btn-sm btn-danger" onclick="deleteEntry(${e.id})" style="padding:0.25rem 0.5rem;font-size:0.78rem">&#10005;</button>
+          </div>
+        </div>`;
+    }
+    html += '</div>';
+
+    // Pagination
+    const totalPages = Math.ceil(selectedEntries.length / ENTRIES_PER_PAGE);
+    if (totalPages > 1) {
+      html += `
+        <div class="pagination">
+          <button onclick="changePage(-1)" ${entryPage === 0 ? 'disabled' : ''}>&larr;</button>
+          <span>${entryPage + 1} / ${totalPages}</span>
+          <button onclick="changePage(1)" ${entryPage >= totalPages - 1 ? 'disabled' : ''}>&rarr;</button>
+        </div>`;
+    }
+  }
+
+  html += `
+    <div style="display:flex;gap:0.5rem;margin-top:0.75rem">
+      <button class="btn-sm btn-success" onclick="addManualEntry('${esc(t.slug)}')">+ Add Entry</button>
+      ${selectedEntries.length ? `<button class="btn-sm btn-danger" onclick="confirmClearEntries('${esc(t.slug)}', '${esc(t.display_name)}')">Delete All</button>` : ''}
+    </div>
+  </div>`;
+  return html;
+}
+
+// ── Tracker selection ──
+window.selectTracker = async function(slug) {
+  if (selectedTracker && selectedTracker.slug === slug) {
+    selectedTracker = null;
+    selectedEntries = [];
+    entryPage = 0;
+    render();
+    return;
+  }
+  selectedTracker = trackers.find(t => t.slug === slug);
+  entryPage = 0;
+  await loadEntries(slug);
+  render();
+};
+
+async function loadEntries(slug) {
+  const res = await fetch(`/api/entries?name=${encodeURIComponent(slug)}`);
+  if (res.ok) {
+    selectedEntries = (await res.json()).reverse(); // newest first
+  }
+}
+
+window.changePage = function(delta) {
+  entryPage += delta;
+  render();
+};
+
+// ── Create tracker ──
+window.showCreateForm = function() {
+  showModal(`
+    <h3>New Tracker</h3>
+    <div class="form-group">
+      <label>Name</label>
+      <input id="m-name" placeholder="e.g. Vitamins" autofocus>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Interval</label>
+        <input id="m-interval" value="3.5d" placeholder="e.g. 1d, 3.5d, 1w">
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <div class="color-grid" id="m-color-grid"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm btn-secondary" onclick="hideModal()">Cancel</button>
+      <button class="btn-sm btn-primary" onclick="createTracker()">Create</button>
+    </div>
+  `);
+  renderColorPicker('m-color-grid', 'orange');
+};
+
+window.createTracker = async function() {
+  const name = document.getElementById('m-name').value.trim();
+  const interval = document.getElementById('m-interval').value.trim();
+  const color = document.querySelector('#m-color-grid .color-swatch.selected')?.dataset.color || 'orange';
+  if (!name) { toast('Name is required', true); return; }
+  const res = await fetch(API('/api/trackers'), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({display_name: name, interval, color})
+  });
+  if (res.ok) {
+    hideModal();
+    toast('Tracker created');
+    // SSE will refresh
+  } else {
+    const err = await res.json();
+    toast(err.error || 'Failed', true);
+  }
+};
+
+// ── Edit tracker ──
+window.editTracker = function(slug) {
+  const t = trackers.find(x => x.slug === slug);
+  if (!t) return;
+  showModal(`
+    <h3>Edit ${esc(t.display_name)}</h3>
+    <div class="form-group">
+      <label>Name</label>
+      <input id="m-name" value="${esc(t.display_name)}">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Interval</label>
+        <input id="m-interval" value="${esc(t.interval)}">
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <div class="color-grid" id="m-color-grid"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm btn-secondary" onclick="hideModal()">Cancel</button>
+      <button class="btn-sm btn-primary" onclick="saveTracker('${esc(slug)}')">Save</button>
+    </div>
+  `);
+  renderColorPicker('m-color-grid', t.color);
+};
+
+window.saveTracker = async function(slug) {
+  const name = document.getElementById('m-name').value.trim();
+  const interval = document.getElementById('m-interval').value.trim();
+  const color = document.querySelector('#m-color-grid .color-swatch.selected')?.dataset.color || 'orange';
+  if (!name) { toast('Name is required', true); return; }
+  const res = await fetch(API(`/api/trackers/${encodeURIComponent(slug)}`), {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({display_name: name, interval, color})
+  });
+  if (res.ok) {
+    const updated = await res.json();
+    if (selectedTracker && selectedTracker.slug === slug) {
+      selectedTracker = {...selectedTracker, slug: updated.slug, display_name: updated.display_name, interval: updated.interval, color: updated.color};
+    }
+    hideModal();
+    toast('Tracker updated');
+  } else {
+    const err = await res.json();
+    toast(err.error || 'Failed', true);
+  }
+};
+
+// ── Delete tracker ──
+window.confirmDeleteTracker = function(slug, name) {
+  showModal(`
+    <h3>Delete ${esc(name)}?</h3>
+    <p>This will permanently delete this tracker and all ${trackers.find(t=>t.slug===slug)?.entry_count || 0} entries. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn-sm btn-secondary" onclick="hideModal()">Cancel</button>
+      <button class="btn-sm btn-danger" onclick="deleteTracker('${esc(slug)}')">Delete</button>
+    </div>
+  `);
+};
+
+window.deleteTracker = async function(slug) {
+  const res = await fetch(API(`/api/trackers/${encodeURIComponent(slug)}`), { method: 'DELETE' });
+  if (res.ok || res.status === 204) {
+    if (selectedTracker && selectedTracker.slug === slug) {
+      selectedTracker = null;
+      selectedEntries = [];
+    }
+    hideModal();
+    toast('Tracker deleted');
+  } else {
+    toast('Failed to delete', true);
+  }
+};
+
+// ── Entry operations ──
+window.deleteEntry = async function(id) {
+  const res = await fetch(API(`/api/entries/${id}`), { method: 'DELETE' });
+  if (res.ok || res.status === 204) {
+    toast('Entry deleted');
+  }
+};
+
+window.confirmClearEntries = function(slug, name) {
+  showModal(`
+    <h3>Delete all entries for ${esc(name)}?</h3>
+    <p>This will permanently delete all ${selectedEntries.length} entries. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn-sm btn-secondary" onclick="hideModal()">Cancel</button>
+      <button class="btn-sm btn-danger" onclick="clearEntries('${esc(slug)}')">Delete All</button>
+    </div>
+  `);
+};
+
+window.clearEntries = async function(slug) {
+  const res = await fetch(API(`/api/entries?name=${encodeURIComponent(slug)}`), { method: 'DELETE' });
+  if (res.ok || res.status === 204) {
+    hideModal();
+    toast('All entries deleted');
+  }
+};
+
+window.addManualEntry = function(slug) {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  showModal(`
+    <h3>Add Entry</h3>
+    <div class="form-group">
+      <label>Date/Time</label>
+      <input type="datetime-local" id="m-ts" value="${local}">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm btn-secondary" onclick="hideModal()">Cancel</button>
+      <button class="btn-sm btn-success" onclick="saveManualEntry('${esc(slug)}')">Add</button>
+    </div>
+  `);
+};
+
+window.saveManualEntry = async function(slug) {
+  const val = document.getElementById('m-ts').value;
+  if (!val) { toast('Date is required', true); return; }
+  const ts = new Date(val).getTime();
+  // POST then PUT to set custom timestamp
+  const res = await fetch(API(`/api/entries?name=${encodeURIComponent(slug)}`), { method: 'POST' });
+  if (res.ok) {
+    const entry = await res.json();
+    // Update with custom timestamp
+    await fetch(API(`/api/entries/${entry.id}`), {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ts})
+    });
+    hideModal();
+    toast('Entry added');
+  }
+};
+
+// ── Copy URL ──
+window.copyURL = async function(slug) {
+  const url = `${window.location.origin}/?name=${encodeURIComponent(slug)}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    toast('URL copied');
+  } catch(e) {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = url;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('URL copied');
+  }
+};
+
+// ── Export ──
+window.exportData = function() {
+  let opts = '';
+  for (const t of trackers) {
+    opts += `<option value="${esc(t.slug)}">${esc(t.display_name)}</option>`;
+  }
+  showModal(`
+    <h3>Export Entries</h3>
+    <div class="form-group">
+      <label>Tracker</label>
+      <select id="m-export-tracker">${opts}</select>
+    </div>
+    <div class="form-group">
+      <label>Format</label>
+      <select id="m-export-format">
+        <option value="csv">CSV</option>
+        <option value="json">JSON</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm btn-secondary" onclick="hideModal()">Cancel</button>
+      <button class="btn-sm btn-primary" onclick="doExport()">Download</button>
+    </div>
+  `);
+};
+
+window.doExport = function() {
+  const slug = document.getElementById('m-export-tracker').value;
+  const fmt = document.getElementById('m-export-format').value;
+  window.open(API(`/api/export/${encodeURIComponent(slug)}?format=${fmt}`), '_blank');
+  hideModal();
+};
+
+// ── Backup ──
+window.backupDB = function() {
+  window.open(API('/api/backup'), '_blank');
+};
+
+// ── Restore ──
+window.restoreDB = function() {
+  showModal(`
+    <h3>Restore Database</h3>
+    <p>This will replace the entire database with the uploaded file. Make a backup first!</p>
+    <div class="form-group">
+      <label>SQLite File</label>
+      <input type="file" id="m-restore-file" accept=".db,.sqlite,.sqlite3">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm btn-secondary" onclick="hideModal()">Cancel</button>
+      <button class="btn-sm btn-danger" onclick="doRestore()">Restore</button>
+    </div>
+  `);
+};
+
+window.doRestore = async function() {
+  const file = document.getElementById('m-restore-file').files[0];
+  if (!file) { toast('Select a file', true); return; }
+  const data = await file.arrayBuffer();
+  const res = await fetch(API('/api/restore'), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/octet-stream'},
+    body: data
+  });
+  if (res.ok) {
+    hideModal();
+    toast('Database restored');
+    // Full refresh
+    setTimeout(() => location.reload(), 1000);
+  } else {
+    const err = await res.json();
+    toast(err.error || 'Failed', true);
+  }
+};
+
+// ── Color picker ──
+function renderColorPicker(containerId, selected) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = COLORS_LIST.map(c =>
+    `<div class="color-swatch ${c === selected ? 'selected' : ''}"
+          style="background:${COLOR_HEX[c]}"
+          data-color="${c}"
+          onclick="pickColor(this)"></div>`
+  ).join('');
+}
+
+window.pickColor = function(el) {
+  el.parentElement.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+};
+
+// ── Modal ──
+function showModal(html) {
+  let overlay = document.querySelector('.modal-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) hideModal(); };
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `<div class="modal">${html}</div>`;
+  overlay.style.display = 'flex';
+}
+
+function hideModal() {
+  const overlay = document.querySelector('.modal-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+// ── Toast ──
+function toast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isError ? '#dc2626' : '#10b981';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ── Helpers ──
+function parseInterval(str) {
+  const m = str.match(/^([\d.]+)\s*(d|h|m|w)$/i);
+  if (!m) return 3.5 * 24 * 60 * 60 * 1000;
+  const val = parseFloat(m[1]);
+  switch (m[2].toLowerCase()) {
+    case 'w': return val * 7 * 24 * 60 * 60 * 1000;
+    case 'd': return val * 24 * 60 * 60 * 1000;
+    case 'h': return val * 60 * 60 * 1000;
+    case 'm': return val * 60 * 1000;
+    default: return val * 24 * 60 * 60 * 1000;
+  }
+}
+
+function fmtIntervalStr(str) {
+  const ms = parseInterval(str);
+  const days = ms / (24 * 60 * 60 * 1000);
+  if (days >= 7 && days % 7 === 0) return (days / 7) + (days / 7 === 1 ? ' week' : ' weeks');
+  if (days >= 1) return days + (days === 1 ? ' day' : ' days');
+  const hours = ms / (60 * 60 * 1000);
+  if (hours >= 1) return hours + (hours === 1 ? ' hour' : ' hours');
+  const mins = ms / (60 * 1000);
+  return mins + (mins === 1 ? ' minute' : ' minutes');
+}
+
+function fmtDate(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric'
+  }) + ', ' + d.toLocaleTimeString('en-US', {
+    hour: 'numeric', minute: '2-digit', hour12: true
+  });
+}
+
+function ago(ts) {
+  const ms = Date.now() - ts;
+  const d = Math.floor(ms / 86400000);
+  const h = Math.floor((ms % 86400000) / 3600000);
+  if (d > 0) return `${d}d ${h}h ago`;
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h > 0) return `${h}h ${m}m ago`;
+  return `${m}m ago`;
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>

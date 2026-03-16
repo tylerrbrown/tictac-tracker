@@ -1,55 +1,135 @@
 # Tic Tac Tracker
 
-A simple web app to track twice-weekly medication ("tic tac") doses with a 3.5-day interval timer.
+A web app to track repeating tasks/medications with configurable interval timers.
 
 ## Architecture
 
-- **Frontend:** Single `index.html` served by Python's built-in `http.server`
+- **Frontend:** `index.html` (landing + tracker page), `admin.html` (admin panel)
 - **Backend:** Python stdlib `http.server` + SQLite — zero dependencies
+- **Real-time:** SSE (Server-Sent Events) for live updates across tabs/devices
 - **Server:** Ubuntu 22.04 ARM64 EC2 instance (`haproxy` / `34.204.39.160`)
 - **Reverse proxy:** HAProxy with SSL termination (wildcard cert `*.tylerrbrown.com`)
 - **App port:** 5050 (localhost only, accessed via HAProxy)
 - **Service:** systemd `tictac.service`
 - **Repo:** https://github.com/tylerrbrown/tictac-tracker
 
+## Files
+
+| File | Description |
+|------|-------------|
+| `app.py` | Backend server — routing, DB, SSE, all API endpoints |
+| `index.html` | Landing page (tracker grid) + tracker page (timer/history) |
+| `admin.html` | Admin panel — tracker CRUD, entry management, tools |
+| `tictac.service` | systemd service file |
+
 ## URLs
 
-- **Tic Tac:** `https://tictac.tylerrbrown.com/?k=x9f2k7m4-b8c1-e3a5-d6w0-q7r9s2t4u1v8`
-- **Custom tracker:** `?k=SECRET&name=Gum&interval=7d`
-- Access key param `?k=` required (shows "404" without it)
+- **Landing:** `https://tictac.tylerrbrown.com/` — shows all trackers
+- **Tracker:** `https://tictac.tylerrbrown.com/?name=tic-tac` — individual tracker
+- **Admin:** `https://tictac.tylerrbrown.com/admin?k=SECRET` — admin panel
 
-### URL Parameters
+### Auth Model
 
-| Param | Default | Description |
-|-------|---------|-------------|
-| `k` | (required) | Access key |
-| `name` | `Tic Tac` | Tracker name — displayed in UI, used as DB scope |
-| `interval` | `3.5d` | Timer duration — supports `w` (weeks), `d` (days), `h` (hours), `m` (minutes) |
+| Endpoint | Auth required? |
+|----------|---------------|
+| `GET /` (landing) | No |
+| `GET /?name=X` (tracker page) | No |
+| `GET /api/trackers`, `GET /api/tracker/<slug>` | No |
+| `GET /api/entries?name=X` | No |
+| `POST /api/entries?name=X` (log entry) | No |
+| `DELETE /api/entries/<id>` (delete one) | No |
+| `GET /api/events` (SSE stream) | No |
+| `GET /admin` | **Yes** (`?k=SECRET`) |
+| `POST/PUT/DELETE /api/trackers/*` | **Yes** |
+| `DELETE /api/entries?name=X` (bulk delete) | **Yes** |
+| `PUT /api/entries/<id>` (edit timestamp) | **Yes** |
+| `GET /api/export/<slug>` | **Yes** |
+| `GET /api/backup`, `POST /api/restore` | **Yes** |
 
-### Example URLs
+Secret key: `x9f2k7m4-b8c1-e3a5-d6w0-q7r9s2t4u1v8`
 
-- Tic Tac (default): `?k=SECRET`
-- Gum weekly: `?k=SECRET&name=Gum&interval=1w`
-- Vitamins daily: `?k=SECRET&name=Vitamins&interval=1d`
+## Database
 
-## App Logic
+SQLite at `/opt/tictac-tracker/tictac.db` (or `./tictac.db` locally).
 
-- Generic interval tracker — name and duration configurable via URL params
-- Each tracker name gets its own isolated entries in the DB (`tracker` column)
-- **Green** (ready): elapsed >= interval — show "take it" button
-- **Red** (wait): elapsed < interval — show live countdown
-- Button logs a new entry (server generates timestamp) and resets the timer
-- Running history log at the bottom with delete capability
+### Tables
+
+**`trackers`** — tracker configuration registry
+```sql
+CREATE TABLE trackers (
+  slug TEXT PRIMARY KEY,           -- normalized name (lowercase, hyphens)
+  display_name TEXT NOT NULL,      -- human-readable name
+  interval TEXT NOT NULL DEFAULT '3.5d',
+  color TEXT NOT NULL DEFAULT 'orange'
+)
+```
+
+**`entries`** — individual log entries
+```sql
+CREATE TABLE entries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts BIGINT NOT NULL,              -- Unix timestamp in milliseconds
+  tracker TEXT NOT NULL DEFAULT 'tictac'  -- references trackers.slug
+)
+```
+
+### Migration
+
+On startup, `seed_trackers()` scans `entries` for distinct tracker slugs and auto-creates any missing `trackers` rows with default settings. This ensures backward compatibility with pre-registry data.
 
 ## API Endpoints
 
-- `GET /` — serves `index.html`
-- `GET /api/entries?name=X` — list entries for tracker X (JSON array of `{id, ts}`)
-- `POST /api/entries?name=X` — add new entry for tracker X (returns `{id, ts}`)
-- `PUT /api/entries/<id>` — update entry timestamp (body: `{"ts": <epoch_ms>}`)
-- `DELETE /api/entries/<id>` — delete an entry
+### Trackers
+- `GET /api/trackers` — list all trackers with stats (entry count, last entry)
+- `GET /api/tracker/<slug>` — single tracker config + stats
+- `POST /api/trackers` — create tracker `{display_name, interval, color}`
+- `PUT /api/trackers/<slug>` — update tracker (rename/color/interval). Rename updates entries too.
+- `DELETE /api/trackers/<slug>` — delete tracker + all its entries
 
-All API endpoints require `?k=SECRET`. The `name` param defaults to `tictac` if omitted (backward compatible).
+### Entries
+- `GET /api/entries?name=X` — list entries for tracker (JSON array of `{id, ts}`)
+- `POST /api/entries?name=X` — add entry (server-generated timestamp)
+- `PUT /api/entries/<id>` — update entry timestamp (body: `{"ts": <epoch_ms>}`)
+- `DELETE /api/entries/<id>` — delete single entry
+- `DELETE /api/entries?name=X` — bulk delete all entries for tracker
+
+### Tools
+- `GET /api/export/<slug>?format=csv|json` — export entries
+- `GET /api/backup` — download full SQLite DB file
+- `POST /api/restore` — upload SQLite DB to replace current
+
+### SSE
+- `GET /api/events` — Server-Sent Events stream
+- Events: `entry-added`, `entry-deleted`, `entry-updated`, `entries-cleared`, `tracker-created`, `tracker-updated`, `tracker-deleted`, `db-restored`
+- Each event payload includes tracker slug for client-side filtering
+- 30-second heartbeat keeps connections alive
+
+## App Logic
+
+### Landing Page (`/`)
+- Grid of tracker cards fetched from `/api/trackers`
+- Each card shows: name, color dot, interval, entry count, status (Ready/countdown/No entries)
+- Tap card → navigates to `/?name=<slug>`
+- SSE listener refreshes on any change
+
+### Tracker Page (`/?name=X`)
+- Loads config from `/api/tracker/<slug>` (interval, color from DB, not URL)
+- **Green** (ready): elapsed >= interval — show "take it" button
+- **Colored** (wait): elapsed < interval — show live countdown
+- Button POSTs new entry, resets timer
+- History log with per-entry delete
+- SSE listener for live cross-tab updates
+- "Back to All Trackers" link at top
+
+### Admin Page (`/admin?k=SECRET`)
+- Dashboard: tracker count + total entry count
+- Tracker list with Edit/Delete/Copy URL buttons per tracker
+- Create New Tracker form (name, interval, color picker)
+- Tap tracker → expand entry list (paginated, 20/page)
+- Entry management: delete individual, bulk delete all, add manual entry with custom timestamp
+- Tools: Export (CSV/JSON), Backup DB, Restore DB
+- SSE listener for real-time updates
+- Confirmation modals for destructive actions
 
 ## Server Deployment
 
@@ -86,9 +166,24 @@ backend web-tictac
 - Pi-hole: needs local DNS override or cache flush after changes
 - Wildcard `*.tylerrbrown.com` points to `aws.tyware.com` (different IP) — specific records needed
 
+## Server Constraints
+
+- **t4g.nano-class** — 418MB total RAM, no swap. Very tight.
+- `apt install` can be OOM-killed — use Python for DB operations instead of installing CLI tools
+- `sqlite3` CLI is not installed; use `python3 -c "import sqlite3; ..."` for migrations
+- Tailscale (`tailscaled`) uses ~49MB — largest non-kernel consumer
+- SSE connections each hold a thread — fine for single-user with a few tabs
+
 ## Decisions
 
-- No auth/login — single user, obscure URL key is sufficient
+- **Obscurity-by-subdomain** for tracker pages — no auth needed to view/use trackers
+- **Admin key** only for admin page and destructive/management operations
+- **Tracker registry** in DB — interval/color stored server-side, not in URL params
+- **SSE** for real-time — works with Python stdlib, no WebSocket library needed
 - Zero Python dependencies — uses stdlib `http.server` + `sqlite3`
-- SQLite DB stored at `/opt/tictac-tracker/tictac.db`
+- SQLite with WAL mode for concurrent reads
 - GitHub Pages deployment abandoned (CORS issues with external DB services)
+
+## Color Presets
+
+orange, red, yellow, lime, green, teal, cyan, blue, indigo, purple, pink, rose, gray, brown, gold
