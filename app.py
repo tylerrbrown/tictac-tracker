@@ -163,8 +163,6 @@ class Handler(BaseHTTPRequestHandler):
             self._create_entry(tracker)
 
         elif parts == ["api", "trackers"]:
-            if not self._check_key(params):
-                return
             self._create_tracker()
 
         elif parts == ["api", "restore"]:

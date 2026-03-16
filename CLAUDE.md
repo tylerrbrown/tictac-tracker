@@ -40,7 +40,8 @@ A web app to track repeating tasks/medications with configurable interval timers
 | `DELETE /api/entries/<id>` (delete one) | No |
 | `GET /api/events` (SSE stream) | No |
 | `GET /admin` | **Yes** (`?k=SECRET`) |
-| `POST/PUT/DELETE /api/trackers/*` | **Yes** |
+| `POST /api/trackers` (create) | No |
+| `PUT/DELETE /api/trackers/*` | **Yes** |
 | `DELETE /api/entries?name=X` (bulk delete) | **Yes** |
 | `PUT /api/entries/<id>` (edit timestamp) | **Yes** |
 | `GET /api/export/<slug>` | **Yes** |
@@ -107,10 +108,11 @@ On startup, `seed_trackers()` scans `entries` for distinct tracker slugs and aut
 ## App Logic
 
 ### Landing Page (`/`)
-- Grid of tracker cards fetched from `/api/trackers`
-- Each card shows: name, color dot, interval, entry count, status (Ready/countdown/No entries)
-- Tap card → navigates to `/?name=<slug>`
-- SSE listener refreshes on any change
+- Explains how the system works (3-step guide)
+- Create a Tracker form: name, interval, color picker
+- On creation: shows the tracker URL with Copy URL + Open Tracker buttons
+- "Create Another" to reset the form
+- No auth required — anyone on the page can create a tracker
 
 ### Tracker Page (`/?name=X`)
 - Loads config from `/api/tracker/<slug>` (interval, color from DB, not URL)
