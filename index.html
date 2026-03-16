@@ -20,6 +20,7 @@
       height: 80vh; font-size: 2rem; color: #333;
     }
     #app { display: none; max-width: 480px; width: 100%; }
+    .loading { text-align: center; padding: 3rem; color: #666; }
     .status-card {
       border-radius: 20px;
       padding: 2.5rem 2rem;
@@ -117,8 +118,12 @@
 
 <script>
 const SECRET = 'x9f2k7m4-b8c1-e3a5-d6w0-q7r9s2t4u1v8';
+const BLOB_ID = '019cf810-553f-765f-bb1a-aa717a916880';
+const BLOB_URL = `https://jsonblob.com/api/jsonBlob/${BLOB_ID}`;
 const INTERVAL_MS = 3.5 * 24 * 60 * 60 * 1000; // 3.5 days in ms
-const STORAGE_KEY = 'tictac_log_v1';
+
+let entries = [];
+let loaded = false;
 
 // --- Access check ---
 const params = new URLSearchParams(window.location.search);
@@ -127,39 +132,41 @@ if (params.get('k') !== SECRET) {
 } else {
   document.getElementById('denied').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  document.getElementById('app').innerHTML = '<div class="loading">Loading...</div>';
   init();
 }
 
-function getEntries() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-  catch { return []; }
-}
-function saveEntries(entries) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+async function fetchEntries() {
+  const res = await fetch(BLOB_URL);
+  const data = await res.json();
+  return data.entries || [];
 }
 
-function init() {
-  // Seed with a test entry 3.7 days ago if no data exists
-  if (getEntries().length === 0) {
-    const seed = Date.now() - (3.7 * 24 * 60 * 60 * 1000);
-    saveEntries([seed]);
-  }
+async function saveEntries(data) {
+  await fetch(BLOB_URL, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ entries: data })
+  });
+}
+
+async function init() {
+  entries = await fetchEntries();
+  loaded = true;
   render();
   setInterval(render, 1000);
 }
 
-function logEntry() {
-  const entries = getEntries();
+async function logEntry() {
   entries.push(Date.now());
-  saveEntries(entries);
   render();
+  await saveEntries(entries);
 }
 
-function deleteEntry(index) {
-  const entries = getEntries();
+async function deleteEntry(index) {
   entries.splice(index, 1);
-  saveEntries(entries);
   render();
+  await saveEntries(entries);
 }
 
 function formatDuration(ms) {
@@ -193,7 +200,7 @@ function timeAgo(ts) {
 }
 
 function render() {
-  const entries = getEntries();
+  if (!loaded) return;
   const app = document.getElementById('app');
   const last = entries.length > 0 ? entries[entries.length - 1] : null;
 
@@ -243,7 +250,6 @@ function render() {
   if (entries.length === 0) {
     html += '<div class="empty-log">No entries yet.</div>';
   } else {
-    // Show newest first
     for (let i = entries.length - 1; i >= 0; i--) {
       html += `
         <div class="log-entry">
