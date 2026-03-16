@@ -35,9 +35,8 @@
       background: linear-gradient(135deg, #059669, #10b981, #34d399);
       box-shadow: 0 8px 30px rgba(16, 185, 129, 0.3);
     }
-    .status-card.red {
-      background: linear-gradient(135deg, #c2410c, #ea580c, #fb923c);
-      box-shadow: 0 8px 30px rgba(234, 88, 12, 0.3);
+    .status-card.wait {
+      /* colors set dynamically via inline style */
     }
     .status-label {
       font-size: 1.2rem; font-weight: 600;
@@ -127,6 +126,17 @@ const params = new URLSearchParams(window.location.search);
 // Parse tracker name and interval from URL
 const TRACKER_NAME = params.get('name') || 'Tic Tac';
 const INTERVAL_MS = parseInterval(params.get('interval') || '3.5d');
+const CARD_COLOR = params.get('color') || 'orange';
+
+const COLORS = {
+  orange: { grad: 'linear-gradient(135deg, #c2410c, #ea580c, #fb923c)', shadow: 'rgba(234, 88, 12, 0.3)' },
+  blue:   { grad: 'linear-gradient(135deg, #1d4ed8, #3b82f6, #60a5fa)', shadow: 'rgba(59, 130, 246, 0.3)' },
+  red:    { grad: 'linear-gradient(135deg, #b91c1c, #dc2626, #ef4444)', shadow: 'rgba(220, 38, 38, 0.3)' },
+  purple: { grad: 'linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa)', shadow: 'rgba(139, 92, 246, 0.3)' },
+  teal:   { grad: 'linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf)', shadow: 'rgba(20, 184, 166, 0.3)' },
+  pink:   { grad: 'linear-gradient(135deg, #be185d, #ec4899, #f472b6)', shadow: 'rgba(236, 72, 153, 0.3)' },
+};
+const CC = COLORS[CARD_COLOR] || COLORS.orange;
 
 function parseInterval(str) {
   const m = str.match(/^([\d.]+)\s*(d|h|m|w)$/i);
@@ -252,7 +262,7 @@ function tickTimer() {
     el.textContent = fmt(elapsed) + ' elapsed';
     // Switch card to green if it was red
     const card = el.closest('.status-card');
-    if (card && card.classList.contains('red')) renderFull();
+    if (card && card.classList.contains('wait')) renderFull();
   } else {
     el.textContent = fmt(INTERVAL_MS - elapsed);
   }
@@ -287,7 +297,7 @@ function renderFull() {
         <button class="btn green-btn" onclick="logEntry()">I took a ${TRACKER_NAME}</button>`;
     } else {
       html += `
-        <div class="status-card red">
+        <div class="status-card wait" style="background:${CC.grad};box-shadow:0 8px 30px ${CC.shadow}">
           <div class="status-label">Next ${TRACKER_NAME} in</div>
           <div id="timer">${fmt(INTERVAL_MS - elapsed)}</div>
         </div>
