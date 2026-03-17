@@ -253,6 +253,12 @@
       font-variant-numeric: tabular-nums;
       color: #fff;
     }
+    #due-time {
+      font-size: 1.92rem;
+      color: rgba(255,255,255,0.5);
+      font-weight: 400;
+      margin-top: 0.15rem;
+    }
     .btn {
       width: 100%;
       padding: 1.3rem;
@@ -777,6 +783,7 @@ function renderTracker() {
         <div class="status-card green">
           <div class="status-label">Ready</div>
           <div id="timer">${fmt(elapsed)} elapsed</div>
+          <div id="due-time">${fmtDate(last.ts + INTERVAL_MS)}</div>
         </div>
         <button class="btn green-btn" style="background:${CC.btn};box-shadow:0 4px 20px ${CC.btnShadow}" onclick="logEntry()">${esc(trackerConfig.verb || 'Log ' + name)}</button>`;
     } else {
@@ -784,6 +791,7 @@ function renderTracker() {
         <div class="status-card wait" style="background:${CC.grad};box-shadow:0 8px 30px ${CC.shadow}">
           <div class="status-label">Next ${esc(name)} in</div>
           <div id="timer">${fmt(INTERVAL_MS - elapsed)}</div>
+          <div id="due-time">${fmtDate(last.ts + INTERVAL_MS)}</div>
         </div>
         <button class="btn red-btn" disabled>Not yet</button>`;
     }
