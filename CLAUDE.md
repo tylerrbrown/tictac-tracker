@@ -61,7 +61,8 @@ CREATE TABLE trackers (
   slug TEXT PRIMARY KEY,           -- normalized name (lowercase, hyphens)
   display_name TEXT NOT NULL,      -- human-readable name
   interval TEXT NOT NULL DEFAULT '3.5d',
-  color TEXT NOT NULL DEFAULT 'orange'
+  color TEXT NOT NULL DEFAULT 'orange',
+  verb TEXT NOT NULL DEFAULT ''    -- button text (e.g. "Took vitamins"), auto-generated via Claude Haiku API
 )
 ```
 

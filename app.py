@@ -9,12 +9,24 @@ import re
 import sqlite3
 import threading
 import time
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(APP_DIR, "tictac.db")
 SECRET = "x9f2k7m4-b8c1-e3a5-d6w0-q7r9s2t4u1v8"
+
+# Load Anthropic API key for verb generation (optional)
+ANTHROPIC_KEY = None
+_secrets_path = os.path.join(APP_DIR, ".secrets")
+if os.path.exists(_secrets_path):
+    with open(_secrets_path) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("ANTHROPIC_API_KEY="):
+                ANTHROPIC_KEY = line.split("=", 1)[1].strip()
+                break
 
 # SSE clients: list of (wfile, lock) tuples
 sse_clients = []
@@ -33,8 +45,13 @@ def get_db():
         "CREATE TABLE IF NOT EXISTS trackers "
         "(slug TEXT PRIMARY KEY, display_name TEXT NOT NULL, "
         "interval TEXT NOT NULL DEFAULT '3.5d', "
-        "color TEXT NOT NULL DEFAULT 'orange')"
+        "color TEXT NOT NULL DEFAULT 'orange', "
+        "verb TEXT NOT NULL DEFAULT '')"
     )
+    # Migration: add verb column if missing
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(trackers)").fetchall()]
+    if "verb" not in cols:
+        conn.execute("ALTER TABLE trackers ADD COLUMN verb TEXT NOT NULL DEFAULT ''")
     conn.commit()
     return conn
 
@@ -81,6 +98,50 @@ def validate_interval(s):
     if val > MAX_INTERVAL[unit]:
         return False, f"interval too large — max is {MAX_INTERVAL[unit]}{unit}"
     return True, None
+
+
+def generate_verb(display_name):
+    """Generate a natural button verb phrase for a tracker name.
+
+    Uses Claude API if available, otherwise falls back to 'Log <name>'.
+    Examples: 'Brush Teeth' → 'Brushed teeth', 'Vitamins' → 'Took vitamins'
+    """
+    if ANTHROPIC_KEY:
+        try:
+            prompt = (
+                f'Generate a short past-tense verb phrase for a tracker button. '
+                f'The tracker is called "{display_name}". The phrase appears on a '
+                f'button the user taps after completing the task. '
+                f'Examples: "Vitamins" → "Took vitamins", "Brush Teeth" → "Brushed teeth", '
+                f'"Laundry" → "Did laundry", "Water Plants" → "Watered plants", '
+                f'"Run" → "Went for a run", "Floss" → "Flossed". '
+                f'Reply with ONLY the phrase, nothing else. Keep it under 30 characters. '
+                f'Lowercase except the first letter.'
+            )
+            body = json.dumps({
+                "model": "claude-haiku-4-5-20251001",
+                "max_tokens": 30,
+                "messages": [{"role": "user", "content": prompt}]
+            }).encode()
+            req = urllib.request.Request(
+                "https://api.anthropic.com/v1/messages",
+                data=body,
+                headers={
+                    "Content-Type": "application/json",
+                    "x-api-key": ANTHROPIC_KEY,
+                    "anthropic-version": "2023-06-01",
+                },
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                data = json.loads(resp.read())
+                verb = data["content"][0]["text"].strip().strip('"').strip("'")
+                if verb and len(verb) <= 40:
+                    return verb
+        except Exception:
+            pass
+    # Fallback
+    return f"Log {display_name}"
 
 
 def slugify(name):
@@ -328,11 +389,11 @@ class Handler(BaseHTTPRequestHandler):
     def _get_trackers(self):
         conn = get_db()
         trackers = conn.execute(
-            "SELECT slug, display_name, interval, color FROM trackers ORDER BY display_name"
+            "SELECT slug, display_name, interval, color, verb FROM trackers ORDER BY display_name"
         ).fetchall()
         # Get entry counts and last entry per tracker
         result = []
-        for slug, display_name, interval, color in trackers:
+        for slug, display_name, interval, color, verb in trackers:
             stats = conn.execute(
                 "SELECT COUNT(*), MAX(ts) FROM entries WHERE tracker = ?",
                 (slug,)
@@ -342,6 +403,7 @@ class Handler(BaseHTTPRequestHandler):
                 "display_name": display_name,
                 "interval": interval,
                 "color": color,
+                "verb": verb or f"Log {display_name}",
                 "entry_count": stats[0],
                 "last_entry": stats[1],
             })
@@ -351,7 +413,7 @@ class Handler(BaseHTTPRequestHandler):
     def _get_tracker(self, slug):
         conn = get_db()
         row = conn.execute(
-            "SELECT slug, display_name, interval, color FROM trackers WHERE slug = ?",
+            "SELECT slug, display_name, interval, color, verb FROM trackers WHERE slug = ?",
             (slug,)
         ).fetchone()
         if not row:
@@ -368,6 +430,7 @@ class Handler(BaseHTTPRequestHandler):
             "display_name": row[1],
             "interval": row[2],
             "color": row[3],
+            "verb": row[4] or f"Log {row[1]}",
             "entry_count": stats[0],
             "last_entry": stats[1],
         })
@@ -401,14 +464,15 @@ class Handler(BaseHTTPRequestHandler):
             conn.close()
             self._json_response({"error": "tracker already exists"}, 409)
             return
+        verb = body.get("verb", "").strip() or generate_verb(display_name)
         conn.execute(
-            "INSERT INTO trackers (slug, display_name, interval, color) VALUES (?, ?, ?, ?)",
-            (slug, display_name, interval, color)
+            "INSERT INTO trackers (slug, display_name, interval, color, verb) VALUES (?, ?, ?, ?, ?)",
+            (slug, display_name, interval, color, verb)
         )
         conn.commit()
         conn.close()
         tracker = {"slug": slug, "display_name": display_name,
-                    "interval": interval, "color": color,
+                    "interval": interval, "color": color, "verb": verb,
                     "entry_count": 0, "last_entry": None}
         self._json_response(tracker, 201)
         broadcast_sse("tracker-created", tracker)
@@ -417,7 +481,7 @@ class Handler(BaseHTTPRequestHandler):
         body = self._read_body()
         conn = get_db()
         row = conn.execute(
-            "SELECT slug, display_name, interval, color FROM trackers WHERE slug = ?",
+            "SELECT slug, display_name, interval, color, verb FROM trackers WHERE slug = ?",
             (old_slug,)
         ).fetchone()
         if not row:
@@ -426,6 +490,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         display_name = body.get("display_name", row[1]).strip()
+        verb = body.get("verb", row[4] or "").strip()
         if not display_name:
             conn.close()
             self._json_response({"error": "name is required"}, 400)
@@ -463,18 +528,18 @@ class Handler(BaseHTTPRequestHandler):
                          (new_slug, old_slug))
             conn.execute("DELETE FROM trackers WHERE slug = ?", (old_slug,))
             conn.execute(
-                "INSERT INTO trackers (slug, display_name, interval, color) VALUES (?, ?, ?, ?)",
-                (new_slug, display_name, interval, color)
+                "INSERT INTO trackers (slug, display_name, interval, color, verb) VALUES (?, ?, ?, ?, ?)",
+                (new_slug, display_name, interval, color, verb)
             )
         else:
             conn.execute(
-                "UPDATE trackers SET display_name = ?, interval = ?, color = ? WHERE slug = ?",
-                (display_name, interval, color, old_slug)
+                "UPDATE trackers SET display_name = ?, interval = ?, color = ?, verb = ? WHERE slug = ?",
+                (display_name, interval, color, verb, old_slug)
             )
         conn.commit()
         conn.close()
         result = {"slug": new_slug, "display_name": display_name,
-                  "interval": interval, "color": color,
+                  "interval": interval, "color": color, "verb": verb or f"Log {display_name}",
                   "old_slug": old_slug}
         self._json_response(result)
         broadcast_sse("tracker-updated", result)

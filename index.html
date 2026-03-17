@@ -777,7 +777,7 @@ function renderTracker() {
         <h2>${esc(name)} Tracker</h2>
         <p>Every ${fmtIntervalStr(trackerConfig ? trackerConfig.interval : '3.5d')}.<br>Tap below when you take one.</p>
       </div>
-      <button class="btn green-btn" style="background:${CC.btn};box-shadow:0 4px 20px ${CC.btnShadow}" onclick="logEntry()">I took a ${esc(name)}</button>`;
+      <button class="btn green-btn" style="background:${CC.btn};box-shadow:0 4px 20px ${CC.btnShadow}" onclick="logEntry()">${esc(trackerConfig.verb || 'Log ' + name)}</button>`;
   } else {
     const elapsed = Date.now() - last.ts;
     if (elapsed >= INTERVAL_MS) {
@@ -786,7 +786,7 @@ function renderTracker() {
           <div class="status-label">Ready</div>
           <div id="timer">${fmt(elapsed)} elapsed</div>
         </div>
-        <button class="btn green-btn" style="background:${CC.btn};box-shadow:0 4px 20px ${CC.btnShadow}" onclick="logEntry()">I took a ${esc(name)}</button>`;
+        <button class="btn green-btn" style="background:${CC.btn};box-shadow:0 4px 20px ${CC.btnShadow}" onclick="logEntry()">${esc(trackerConfig.verb || 'Log ' + name)}</button>`;
     } else {
       html += `
         <div class="status-card wait" style="background:${CC.grad};box-shadow:0 8px 30px ${CC.shadow}">
