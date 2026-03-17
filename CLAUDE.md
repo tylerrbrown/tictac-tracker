@@ -122,7 +122,6 @@ On startup, `seed_trackers()` scans `entries` for distinct tracker slugs and aut
 - Button POSTs new entry, resets timer
 - History log with per-entry delete
 - SSE listener for live cross-tab updates
-- "Back to All Trackers" link at top
 
 ### Admin Page (`/admin?k=SECRET`)
 - Dashboard: tracker count + total entry count

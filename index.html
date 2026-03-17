@@ -314,14 +314,6 @@
     }
     .first-time h2 { margin-bottom: 0.75rem; font-size: 1.56rem; font-weight: 600; color: #d4d4d4; }
     .first-time p { color: #a3a3a3; margin-bottom: 1rem; font-size: 1.2rem; }
-    .back-link {
-      display: inline-block;
-      color: #6b6b6b;
-      text-decoration: none;
-      font-size: 0.95rem;
-      margin-bottom: 1rem;
-    }
-    .back-link:hover { color: #a3a3a3; }
   </style>
 </head>
 <body>
@@ -769,7 +761,7 @@ function renderTracker() {
   const app = document.getElementById('app');
   const last = entries.length > 0 ? entries[entries.length - 1] : null;
   const name = trackerConfig ? trackerConfig.display_name : trackerSlug;
-  let html = '<a class="back-link" href="/">&larr; Home</a>';
+  let html = '';
 
   if (!last) {
     html += `
