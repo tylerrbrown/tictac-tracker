@@ -515,6 +515,10 @@ window.showCreateForm = function() {
       <label>Name</label>
       <input id="m-name" placeholder="e.g. Vitamins" autofocus>
     </div>
+    <div class="form-group">
+      <label>Button text <span style="font-weight:400;color:#6b6b6b">(auto-generated if blank)</span></label>
+      <input id="m-verb" placeholder="e.g. Took vitamins">
+    </div>
     <div class="form-row">
       <div class="form-group">
         <label>Interval</label>
@@ -535,16 +539,19 @@ window.showCreateForm = function() {
 
 window.createTracker = async function() {
   const name = document.getElementById('m-name').value.trim();
+  const verb = document.getElementById('m-verb').value.trim();
   const interval = document.getElementById('m-interval').value.trim();
   const color = document.querySelector('#m-color-grid .color-swatch.selected')?.dataset.color || 'orange';
   if (!name) { toast('Name is required', true); return; }
   if (name.length > 40) { toast('Name too long (max 40 characters)', true); return; }
   if (!interval) { toast('Interval is required', true); return; }
   if (!parseInterval(interval)) { toast('Invalid interval — use number + m/h/d/w (e.g. 1d, 12h)', true); return; }
+  const body = {display_name: name, interval, color};
+  if (verb) body.verb = verb;
   const res = await fetch(API('/api/trackers'), {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({display_name: name, interval, color})
+    body: JSON.stringify(body)
   });
   if (res.ok) {
     hideModal();
@@ -566,6 +573,10 @@ window.editTracker = function(slug) {
       <label>Name</label>
       <input id="m-name" value="${esc(t.display_name)}">
     </div>
+    <div class="form-group">
+      <label>Button text</label>
+      <input id="m-verb" value="${esc(t.verb || '')}">
+    </div>
     <div class="form-row">
       <div class="form-group">
         <label>Interval</label>
@@ -586,6 +597,7 @@ window.editTracker = function(slug) {
 
 window.saveTracker = async function(slug) {
   const name = document.getElementById('m-name').value.trim();
+  const verb = document.getElementById('m-verb').value.trim();
   const interval = document.getElementById('m-interval').value.trim();
   const color = document.querySelector('#m-color-grid .color-swatch.selected')?.dataset.color || 'orange';
   if (!name) { toast('Name is required', true); return; }
@@ -595,12 +607,12 @@ window.saveTracker = async function(slug) {
   const res = await fetch(API(`/api/trackers/${encodeURIComponent(slug)}`), {
     method: 'PUT',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({display_name: name, interval, color})
+    body: JSON.stringify({display_name: name, interval, color, verb})
   });
   if (res.ok) {
     const updated = await res.json();
     if (selectedTracker && selectedTracker.slug === slug) {
-      selectedTracker = {...selectedTracker, slug: updated.slug, display_name: updated.display_name, interval: updated.interval, color: updated.color};
+      selectedTracker = {...selectedTracker, slug: updated.slug, display_name: updated.display_name, interval: updated.interval, color: updated.color, verb: updated.verb};
     }
     hideModal();
     toast('Tracker updated');
